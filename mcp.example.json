@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "trello-cli": {
+      "command": "/Users/brandonk/dev/trello-cli/bin/trello-mcp",
+      "env": {
+        "TRELLO_PROFILE": "default"
+      }
+    }
+  }
+}

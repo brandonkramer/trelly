@@ -1,0 +1,37 @@
+{
+  "name": "trello-cli",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fast Trello CLI with multi-profile auth and MCP server",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "trello": "./bin/trello",
+    "trello-mcp": "./bin/trello-mcp"
+  },
+  "scripts": {
+    "trello": "bun src/cli/index.ts",
+    "mcp": "bun src/mcp/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "lint": "biome check .",
+    "fmt": "biome format --write .",
+    "fmt:check": "biome check .",
+    "postinstall": "chmod +x bin/trello bin/trello-mcp bin/run-ts 2>/dev/null || true"
+  },
+  "engines": {
+    "bun": ">=1.2.0",
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "commander": "^15.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.2",
+    "@types/node": "^26.1.0",
+    "tsx": "^4.22.5",
+    "typescript": "^6.0.3"
+  }
+}
