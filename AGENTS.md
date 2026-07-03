@@ -10,7 +10,7 @@ All output is a JSON envelope: `{ ok, profile, data }` /
 - `src/api/` — `http.ts` (30s timeout, 429 retry), `client.ts` (one method per endpoint)
 - `src/auth/` — profiles in `~/.config/trello-cli/config.json`, loopback browser flow
 - `src/cli/` — commander program: `index.ts`, `context.ts`, `commands/`
-- `src/mcp/` — `server.ts`, `register-tools.ts` (all tools), `handlers.ts`
+- `src/mcp/` — `server.ts`, `tools/` (tool registrations), `handlers.ts`
 - `bin/` — bash launchers: `trello`, `trello-mcp`
 
 ## Commands
@@ -31,7 +31,7 @@ Run all three checks before committing.
   for types; explicit `.ts` import extensions; named exports only
 - CLI: JSON on stdout, logs/prompts on stderr, `process.exitCode = 1` on failure.
   MCP server: never write to stdout (stdio transport)
-- New MCP tools go in `src/mcp/register-tools.ts`: zod input schema, envelope
+- New MCP tools go in `src/mcp/tools/` (by resource): zod input schema, envelope
   `outputSchema`, `readOnlyHint`/`destructiveHint` annotations
 - `*_archive` = `PUT closed=true` (reversible); `*_delete` = permanent —
   descriptions must say which
