@@ -54,12 +54,23 @@ TrelloPowerUp.initialize({
           ),
     },
   ],
-  // The new Trello card back doesn't answer t.card() from inside section
-  // iframes, so fetch here (connector context works) and pass via signed URL.
+  // The new Trello card back doesn't answer t.card() (the data command) even
+  // from the connector, while UI commands still work. Fall back to the
+  // board-scoped t.cards(), which the main board frame does answer, and pass
+  // the result to the section via signed URL.
   "card-back-section": (t) =>
     t
       .card("id", "shortUrl", "badges", "attachments")
-      .catch(() => t.card("id", "shortUrl", "attachments").catch(() => null))
+      .catch(() =>
+        t.cards("id", "shortUrl", "badges").then((cards) => {
+          var hit = cards.find((c) => c.id === (t.getContext() || {}).card);
+          if (!hit) {
+            throw new Error("card not in board cache");
+          }
+          return hit;
+        }),
+      )
+      .catch(() => null)
       .then((card) => ({
         title: "Agent activity",
         icon: ICON,

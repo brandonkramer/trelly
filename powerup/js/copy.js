@@ -15,10 +15,25 @@ function argCard() {
   }
 }
 
+function contextCard() {
+  var ctx;
+  try {
+    ctx = t.getContext();
+  } catch (_err) {
+    ctx = null;
+  }
+  return ctx && ctx.card
+    ? { id: ctx.card, shortUrl: `https://trello.com/c/${ctx.card}` }
+    : null;
+}
+
 var card = argCard();
 
 function getCard() {
-  return card ? Promise.resolve(card) : t.card("id", "shortUrl");
+  if (card) {
+    return Promise.resolve(card);
+  }
+  return t.card("id", "shortUrl").catch(() => contextCard());
 }
 
 function flash(button) {
