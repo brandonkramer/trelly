@@ -1,5 +1,5 @@
 <p>
-  <img src="assets/logo.svg" alt="Trelly" width="128" height="128" />
+  <img src="assets/logo.svg" alt="Trelly" width="180" height="180" />
 </p>
 
 # Trelly -- Trello CLI
