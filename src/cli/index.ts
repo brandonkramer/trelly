@@ -19,7 +19,7 @@ const program = new Command();
 
 program
   .name("trello")
-  .description("Fast Trello CLI — bare `trello` opens the interactive board UI")
+  .description("trelly — Trello CLI; bare `trello` opens the interactive board UI")
   .version(packageVersion())
   .option("-p, --profile <name>", "Auth profile (or TRELLO_PROFILE env)")
   .option("--json", "Output the raw JSON envelope", false)

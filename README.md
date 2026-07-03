@@ -1,25 +1,36 @@
-# trello-cli
+# trelly
 
-Trello CLI + MCP server. **Human, Trello-styled output by default**; add `--json` for scripts and automation.
+Fast Trello CLI + MCP server ([npm](https://www.npmjs.com/package/trelly): `npm install -g trelly`).
+**Human, Trello-styled output by default**; add `--json` for scripts and automation.
+Commands: **`trello`** or **`trelly`** (same binary).
 
-![trello-cli interactive UI](cli.gif)
+![trelly interactive UI](cli.gif)
 
 Boards, lists, cards, checklists, labels, custom fields, search, webhooks, multi-profile
-auth, interactive `trello ui`, raw `trello api` escape hatch.
+auth, interactive kanban TUI, raw `trello api` escape hatch.
 
 ## Quick start
 
 ```bash
-cd ~/dev/trello-cli
+npm install -g trelly
+trelly auth setup    # once: API key from power-ups/admin
+trelly auth login    # browser → Allow
+trelly boards list
+```
+
+From source (repo [brandonkramer/trello-cli](https://github.com/brandonkramer/trello-cli)):
+
+```bash
+git clone https://github.com/brandonkramer/trello-cli.git && cd trello-cli
 bun install
-./bin/trello auth setup    # once: API key from power-ups/admin
-./bin/trello auth login    # browser → Allow
+./bin/trello auth setup
+./bin/trello auth login
 ./bin/trello boards list
 ```
 
-No Bun? `npm install` — tsx is the fallback runtime.
+No Bun? `npm install` in the clone — tsx is the fallback runtime.
 
-Optional: `bun link` or add `bin/` to `PATH`.
+Optional: `bun link` / `npm link`, or add `bin/` to `PATH`.
 
 ## Output
 
@@ -35,7 +46,7 @@ Optional: `bun link` or add `bin/` to `PATH`.
 
 ## Interactive UI
 
-Bare **`trello`** (no subcommand) opens the Ink kanban board in your terminal — same as `trello ui`.
+Bare **`trello`** / **`trelly`** (no subcommand) opens the Ink kanban board in your terminal — same as `trello ui`.
 
 ```bash
 trello              # board picker when no id given
@@ -45,7 +56,7 @@ trello ui BOARD_ID  # jump straight to a board
 
 Requires a TTY. Keys: **arrows** / **hjkl** move focus, **Enter** card detail, **r** refresh, **q** / **Esc** back or quit.
 
-See the demo above or run `./bin/trello --help` for all subcommands.
+See the demo above or run `trelly --help` for all subcommands.
 
 ## Auth
 
@@ -56,35 +67,36 @@ Register a throwaway app at [power-ups/admin](https://trello.com/power-ups/admin
 After login the CLI is **you** on Trello — same boards and permissions as the website.
 
 ```bash
-trello auth setup
-trello auth login
-trello auth login --profile work
-trello auth login --manual              # paste token if redirect blocked
-trello auth login --full-access         # never-expiring token
-trello auth list
-trello auth use work
-trello auth logout --profile work
-trello auth url
+trelly auth setup
+trelly auth login
+trelly auth login --profile work
+trelly auth login --manual              # paste token if redirect blocked
+trelly auth login --full-access         # never-expiring token
+trelly auth list
+trelly auth use work
+trelly auth logout --profile work
+trelly auth url
 ```
 
-Non-interactive: `trello auth setup --api-key KEY` then `trello auth login --api-key KEY --token TOKEN`.
+Non-interactive: `trelly auth setup --api-key KEY` then `trelly auth login --api-key KEY --token TOKEN`.
 
 Environment override: `TRELLO_APP_API_KEY`, `TRELLO_API_KEY`, `TRELLO_TOKEN`, `TRELLO_PROFILE`.
 
-Credentials: `~/.config/trello-cli/config.json` (mode `600`).
+Credentials: `~/.config/trelly/config.json` (mode `600`). Migrates automatically from
+`~/.config/trello-cli/config.json` on next save.
 
 ## Usage
 
 ```bash
-trello boards list
-trello --json --pretty boards list | jq '.data[].name'
-trello --profile work boards lists BOARD_ID
-trello cards create --list LIST_ID --name "Ship feature"
-trello cards comments CARD_ID
-trello cards comment CARD_ID --text "Shipped"
-trello search "customer onboarding"
-trello api -X PUT --path /cards/CARD_ID --query idList=LIST_ID
-trello api -X POST --path /cards --body '{"idList":"LIST_ID","name":"Hi"}'
+trelly boards list
+trelly --json --pretty boards list | jq '.data[].name'
+trelly --profile work boards lists BOARD_ID
+trelly cards create --list LIST_ID --name "Ship feature"
+trelly cards comments CARD_ID
+trelly cards comment CARD_ID --text "Shipped"
+trelly search "customer onboarding"
+trelly api -X PUT --path /cards/CARD_ID --query idList=LIST_ID
+trelly api -X POST --path /cards --body '{"idList":"LIST_ID","name":"Hi"}'
 ```
 
 Flags: `-p, --profile <name>`, `--json`, `--pretty` (with `--json` only).
@@ -110,22 +122,24 @@ Top-level: `auth` · `boards` · `lists` · `cards` · `checklists` · `labels` 
 | **orgs** | `get` · `boards` |
 | **actions** | `get` |
 | **api** | raw REST (`-X`, `--path`, `--query`, `--body`) |
-| **ui** | `[boardId]` — or run bare `trello` |
+| **ui** | `[boardId]` — or run bare `trello` / `trelly` |
 
-List-type custom field values: use `trello api` with `PUT /cards/{id}/customField/{fieldId}/item` and `{"idValue":"..."}` (see [skills/trello-cli/SKILL.md](skills/trello-cli/SKILL.md)).
+List-type custom field values: use `trelly api` with `PUT /cards/{id}/customField/{fieldId}/item` and `{"idValue":"..."}` (see [skills/trelly/SKILL.md](skills/trelly/SKILL.md)).
 
-Per-subcommand flags: `./bin/trello <group> --help`. Curated examples and agent guidance: [skills/trello-cli/SKILL.md](skills/trello-cli/SKILL.md).
+Per-subcommand flags: `trelly <group> --help`. Curated examples and agent guidance: [skills/trelly/SKILL.md](skills/trelly/SKILL.md).
 
 ## MCP
 
 Add to `~/.cursor/mcp.json` (see `mcp.example.json`):
 
 ```json
-"trello-cli": {
-  "command": "$HOME/dev/trello-cli/bin/trello-mcp",
+"trelly": {
+  "command": "trello-mcp",
   "env": { "TRELLO_PROFILE": "default" }
 }
 ```
+
+After `npm install -g trelly`, `trello-mcp` is on your PATH. From a clone, use the full path to `bin/trello-mcp`.
 
 Stdio server — JSON envelope on every tool (`{ ok, profile, data }`), never CLI human output. Pass **`profile`** on any tool for a non-default account. Prefer **`trello_*_archive`** over **`trello_card_delete`** (permanent; no board-delete MCP tool).
 
@@ -161,7 +175,7 @@ Stdio server — JSON envelope on every tool (`{ ok, profile, data }`), never CL
 | `trello_webhook_delete` | Delete webhook |
 | `trello_api` | Raw REST escape hatch |
 
-Full tool notes and MCP vs CLI guidance: [skills/trello-mcp/SKILL.md](skills/trello-mcp/SKILL.md).
+Full tool notes and MCP vs CLI guidance: [skills/trelly-mcp/SKILL.md](skills/trelly-mcp/SKILL.md).
 
 ## Development
 
@@ -171,7 +185,7 @@ bun run typecheck && bun test && bun run lint
 
 CI runs the same via `bun install --frozen-lockfile`. See `AGENTS.md` for conventions.
 
-**Agent skills:** [skills/](skills/README.md) — portable `SKILL.md` files for Cursor, Claude, Pi, Codex (`trello-cli`, `trello-mcp`).
+**Agent skills:** [skills/](skills/README.md) — portable `SKILL.md` files for Cursor, Claude, Pi, Codex (`trelly`, `trelly-mcp`).
 
 ## License
 

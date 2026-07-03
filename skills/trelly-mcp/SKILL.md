@@ -1,14 +1,15 @@
 ---
-name: trello-mcp
+name: trelly-mcp
 description: >-
-  Configure and use the trello-cli MCP stdio server (trello_boards_list,
+  Configure and use the trelly MCP stdio server (trello_boards_list,
   trello_card_create, trello_search, etc.). Use when wiring Cursor/Claude MCP,
-  calling Trello from an IDE agent, or choosing between MCP tools vs trello CLI.
+  calling Trello from an IDE agent, or choosing between MCP tools vs trelly CLI.
 ---
 
-# trello-mcp
+# trelly-mcp
 
-MCP server for Trello. Returns JSON envelope on every tool: `{ ok, profile, data }` /
+MCP server for Trello (npm package **trelly**, bin **`trello-mcp`**). Returns JSON
+envelope on every tool: `{ ok, profile, data }` /
 `{ ok: false, error, status?, details? }`. Never uses CLI human/Ink output.
 
 ## Setup
@@ -16,9 +17,9 @@ MCP server for Trello. Returns JSON envelope on every tool: `{ ok, profile, data
 ### 1. Auth (CLI, once)
 
 ```bash
-./bin/trello auth setup
-./bin/trello auth login
-./bin/trello auth list
+trelly auth setup
+trelly auth login
+trelly auth list
 ```
 
 ### 2. Cursor — `~/.cursor/mcp.json`
@@ -26,8 +27,8 @@ MCP server for Trello. Returns JSON envelope on every tool: `{ ok, profile, data
 ```json
 {
   "mcpServers": {
-    "trello-cli": {
-      "command": "/absolute/path/to/trello-cli/bin/trello-mcp",
+    "trelly": {
+      "command": "trello-mcp",
       "env": {
         "TRELLO_PROFILE": "default"
       }
@@ -36,7 +37,8 @@ MCP server for Trello. Returns JSON envelope on every tool: `{ ok, profile, data
 }
 ```
 
-Replace the path with your clone. See [mcp.example.json](../../mcp.example.json).
+After `npm install -g trelly`, `trello-mcp` is on PATH. From a clone, use the full path
+to `bin/trello-mcp`. See [mcp.example.json](../../mcp.example.json).
 
 ### 3. Restart the IDE
 
@@ -48,7 +50,7 @@ Reload MCP servers after editing config.
 cd trello-cli && bun run mcp
 ```
 
-Starts stdio MCP manually (IDE normally launches `bin/trello-mcp` itself).
+Starts stdio MCP manually (IDE normally launches `trello-mcp` itself).
 
 ## Using tools
 
@@ -97,7 +99,7 @@ Starts stdio MCP manually (IDE normally launches `bin/trello-mcp` itself).
 | Structured tool calls with schemas | `trello ui` interactive board |
 | Cursor/Codex/Claude with MCP wired | CI with `--json` |
 
-For terminal work, invoke the **trello-cli** skill instead.
+For terminal work, invoke the **trelly** skill instead.
 
 ## Extending
 

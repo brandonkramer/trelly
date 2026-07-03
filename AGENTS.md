@@ -1,15 +1,17 @@
 # AGENTS.md
 
-trello-cli — Trello CLI + MCP stdio server. TypeScript, run with **Bun**
-(`bin/run-ts` falls back to tsx/Node; CI runs the same checks on Bun).
-Output is human/Trello-styled by default (ink, `src/cli/ui/static.tsx`); the
-`--json` flag prints the envelope `{ ok, profile, data }` /
-`{ ok: false, error, status?, details? }` (`--pretty` indents it).
+**trelly** — Trello CLI + MCP stdio server (npm package `trelly`, bins `trello` /
+`trelly`, `trello-mcp`). TypeScript, run with **Bun** (`bin/run-ts` falls back to
+tsx/Node; CI runs the same checks on Bun). Output is human/Trello-styled by default
+(ink, `src/cli/ui/static.tsx`); the `--json` flag prints the envelope
+`{ ok, profile, data }` / `{ ok: false, error, status?, details? }` (`--pretty`
+indents it).
 
 ## Layout
 
 - `src/api/` — `http.ts` (30s timeout, 429 retry), `client.ts` (one method per endpoint)
-- `src/auth/` — profiles in `~/.config/trello-cli/config.json`, loopback browser flow
+- `src/auth/` — profiles in `~/.config/trelly/config.json` (migrates from
+  `~/.config/trello-cli/`), loopback browser flow
 - `src/cli/` — commander program: `index.ts`, `context.ts`, `commands/`, `ui/` (ink kanban TUI)
 - `src/mcp/` — `server.ts`, `tools/` (tool registrations), `handlers.ts`
 - `bin/` — bash launchers: `trello`, `trello-mcp`
@@ -37,11 +39,11 @@ Run all three checks before committing.
   `outputSchema`, `readOnlyHint`/`destructiveHint` annotations
 - `*_archive` = `PUT closed=true` (reversible); `*_delete` = permanent —
   descriptions must say which
-- Never read, log, or commit credentials (`~/.config/trello-cli/config.json`);
+- Never read, log, or commit credentials (`~/.config/trelly/config.json`);
   auth goes in the `Authorization` header, never in URLs
 - No live Trello API calls in tests
-- Publishable to npm (`npx` / `bunx`); bins run TypeScript via `bin/run-ts`
-  (Bun if present, else `tsx` — kept in `dependencies` for Node installs)
+- Publishable to npm as **`trelly`** (`npm install -g trelly`); bins run TypeScript via
+  `bin/run-ts` (Bun if present, else `tsx` — kept in `dependencies` for Node installs)
 
 ## Commits & PRs
 
@@ -53,4 +55,4 @@ Run all three checks before committing.
 ## Agent skills
 
 Portable skills for Cursor, Claude Code, Pi, Codex: [`skills/`](skills/README.md)
-(`trello-cli`, `trello-mcp`). Cursor: symlinked under `.cursor/skills/`.
+(`trelly`, `trelly-mcp`). Cursor: symlink under `.cursor/skills/`.

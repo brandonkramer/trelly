@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "trello-cli",
+      "name": "trelly",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.29.0",
         "commander": "^15.0.0",

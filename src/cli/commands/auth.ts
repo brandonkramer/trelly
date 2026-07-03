@@ -64,7 +64,7 @@ One-time setup (per Trello account / Power-Up):
         setAppApiKey(apiKey);
         printResult(
           success("default", {
-            message: "Saved app API key for trello-cli",
+            message: "Saved app API key for trelly",
             configPath: configPath(),
             allowedOrigin: SETUP_ALLOWED_ORIGIN,
             next: "Run: trello auth login",

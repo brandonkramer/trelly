@@ -3,7 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { packageVersion } from "../version.ts";
 import { registerTrelloTools } from "./tools/index.ts";
 
-const server = new McpServer({ name: "trello-cli", version: packageVersion() });
+const server = new McpServer({ name: "trelly", version: packageVersion() });
 registerTrelloTools(server);
 
 async function main(): Promise<void> {

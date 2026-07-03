@@ -19,8 +19,16 @@ const configSchema = z.object({
 export type Profile = z.infer<typeof profileSchema>;
 export type Config = z.infer<typeof configSchema>;
 
-const CONFIG_DIR = join(homedir(), ".config", "trello-cli");
+const LEGACY_CONFIG_DIR = join(homedir(), ".config", "trello-cli");
+const CONFIG_DIR = join(homedir(), ".config", "trelly");
+const LEGACY_CONFIG_PATH = join(LEGACY_CONFIG_DIR, "config.json");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
+
+function readConfigPath(): string {
+  if (existsSync(CONFIG_PATH)) return CONFIG_PATH;
+  if (existsSync(LEGACY_CONFIG_PATH)) return LEGACY_CONFIG_PATH;
+  return CONFIG_PATH;
+}
 
 export function configPath(): string {
   return CONFIG_PATH;
@@ -31,11 +39,12 @@ function emptyConfig(): Config {
 }
 
 export function loadConfig(): Config {
-  if (!existsSync(CONFIG_PATH)) {
+  const path = readConfigPath();
+  if (!existsSync(path)) {
     return emptyConfig();
   }
 
-  const raw = readFileSync(CONFIG_PATH, "utf8");
+  const raw = readFileSync(path, "utf8");
   return configSchema.parse(JSON.parse(raw));
 }
 
@@ -69,7 +78,7 @@ export function resolveProfile(name?: string): {
     const known = Object.keys(config.profiles);
     throw new Error(
       known.length === 0
-        ? `No Trello profile "${profileName}". Run: trello auth login`
+        ? `No Trello profile "${profileName}". Run: trelly auth login`
         : `Unknown profile "${profileName}". Known: ${known.join(", ")}`,
     );
   }
@@ -141,7 +150,7 @@ export function authLoginUrl(apiKey: string, opts: AuthUrlOptions = {}): string 
   const scope = opts.scope ?? ["read", "write"];
   const params = new URLSearchParams({
     key: apiKey,
-    name: opts.appName ?? "trello-cli",
+    name: opts.appName ?? "trelly",
     expiration: opts.expiration ?? "30days",
     response_type: "token",
     scope: scope.join(","),

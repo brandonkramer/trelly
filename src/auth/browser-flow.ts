@@ -19,7 +19,7 @@ const DEFAULT_PORT = 14189;
 function callbackCaptureHtml(state: string): string {
   return `<!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><title>trello-cli</title></head>
+<head><meta charset="utf-8"><title>trelly</title></head>
 <body style="font-family: system-ui; max-width: 32rem; margin: 4rem auto; text-align: center;">
   <p id="status">Finishing authorization…</p>
   <script>
@@ -60,7 +60,7 @@ function callbackCaptureHtml(state: string): string {
           status.textContent = "Connected! Return to your terminal.";
         })
         .catch(function () {
-          status.textContent = "Could not send token to trello-cli.";
+          status.textContent = "Could not send token to trelly.";
         });
     })();
   </script>
