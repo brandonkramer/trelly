@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { parseTrelloResponse, trelloErrorMessage } from "./api/http.ts";
 import { authLoginUrl } from "./auth/profiles.ts";
 import { parseKvPairs } from "./cli/context.ts";
+import { customFieldChips } from "./cli/ui/custom-fields.ts";
 import { dueStatus, labelHex, listAccentHex } from "./cli/ui/palette.ts";
 import { isBoard, isCard, isLabel, isList } from "./cli/ui/shapes.ts";
 
@@ -74,6 +75,31 @@ describe("ui palette", () => {
     assert.equal(dueStatus("2026-07-01T00:00:00Z", false, now), "overdue");
     assert.equal(dueStatus("2026-07-03T18:00:00Z", false, now), "soon");
     assert.equal(dueStatus("2026-08-01T00:00:00Z", false, now), "later");
+  });
+});
+
+describe("custom field chips", () => {
+  const defs = [
+    {
+      id: "f1",
+      name: "Priority",
+      type: "list",
+      cardFront: true,
+      options: [{ id: "o1", text: "Highest", color: "red" }],
+    },
+    { id: "f2", name: "Points", type: "number", cardFront: true, options: [] },
+  ];
+
+  it("resolves list options and raw values, skipping unknown fields", () => {
+    const chips = customFieldChips(defs, [
+      { idCustomField: "f1", idValue: "o1" },
+      { idCustomField: "f2", value: { number: "5" } },
+      { idCustomField: "missing", idValue: "x" },
+    ]);
+    assert.deepEqual(chips, [
+      { id: "f1", label: "Priority: Highest", color: "red" },
+      { id: "f2", label: "Points: 5", color: null },
+    ]);
   });
 });
 

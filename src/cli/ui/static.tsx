@@ -137,15 +137,21 @@ function CardRow({ card }: { card: Rec }) {
   const badges = isRecord(card.badges) ? card.badges : undefined;
   const checkItems = (badges?.checkItems as number | undefined) ?? 0;
   const checked = (badges?.checkItemsChecked as number | undefined) ?? 0;
+  const comments = (badges?.comments as number | undefined) ?? 0;
+  const attachments = (badges?.attachments as number | undefined) ?? 0;
   return (
     <Text wrap="truncate">
       <LabelDots labels={card.labels} />
+      {card.dueComplete === true ? <Text color={GREEN}>✓ </Text> : null}
       {String(card.name)} <DueBadge card={card} />
       {checkItems > 0 ? (
         <Text dimColor>
           ✓{checked}/{checkItems}{" "}
         </Text>
       ) : null}
+      {card.desc ? <Text dimColor>≡ </Text> : null}
+      {comments > 0 ? <Text dimColor>💬{comments} </Text> : null}
+      {attachments > 0 ? <Text dimColor>📎{attachments} </Text> : null}
       <Text dimColor>{String(card.shortLink ?? card.id ?? "")}</Text>
     </Text>
   );

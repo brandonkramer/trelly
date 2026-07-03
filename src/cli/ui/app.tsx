@@ -24,8 +24,10 @@ export type UiCard = {
   name: string;
   desc: string;
   due: string | null;
+  start?: string | null;
   dueComplete: boolean;
   idList: string;
+  idMembers?: string[];
   pos: number;
   shortUrl: string;
   labels: UiLabel[];
@@ -45,6 +47,18 @@ type BoardData = {
   lists: UiList[];
   cardsByList: Map<string, UiCard[]>;
   customFields: UiCustomFieldDef[];
+  membersById: Map<string, string>;
+};
+
+type CardExtras = {
+  attachments: Array<{ id: string; name: string }>;
+  checklists: Array<{
+    id: string;
+    name: string;
+    items: Array<{ id: string; name: string; complete: boolean }>;
+  }>;
+  comments: Array<{ id: string; author: string; date: string; text: string }>;
+  error?: string;
 };
 
 const COL_WIDTH = 30;
@@ -152,6 +166,8 @@ function Column({
   focusedRow,
   width,
   maxCards,
+  cardHeight,
+  frontFields,
 }: {
   list: UiList;
   cards: UiCard[];
@@ -159,6 +175,8 @@ function Column({
   focusedRow: number | null;
   width: number;
   maxCards: number;
+  cardHeight: number;
+  frontFields: UiCustomFieldDef[];
 }) {
   const total = cards.length;
   const accent = listAccentHex(list.color);
@@ -187,6 +205,8 @@ function Column({
           width={width - 1}
           focused={focusedRow === start + i}
           accent={accent}
+          height={cardHeight}
+          frontFields={frontFields}
         />
       ))}
       {total === 0 ? <Text dimColor> (empty)</Text> : null}
@@ -199,22 +219,42 @@ function CardDetail({
   card,
   listName,
   width,
+  defs,
+  membersById,
+  extras,
 }: {
   card: UiCard;
   listName: string;
   width: number;
+  defs: UiCustomFieldDef[];
+  membersById: Map<string, string>;
+  extras?: CardExtras;
 }) {
   const status = dueStatus(card.due, card.dueComplete);
   const checkItems = card.badges?.checkItems ?? 0;
   const checked = card.badges?.checkItemsChecked ?? 0;
+  const complete = card.dueComplete === true;
+  const chips = customFieldChips(defs, card.customFieldItems);
+  const memberNames = (card.idMembers ?? [])
+    .map((id) => membersById.get(id))
+    .filter((name): name is string => Boolean(name));
   return (
-    <Box flexDirection="column" paddingX={1}>
+    <Box flexDirection="column" paddingX={1} width={Math.min(width, 82)}>
       <Text bold wrap="truncate">
+        {complete ? <Text color="#61bd4f">✓ </Text> : null}
         {card.name}
       </Text>
       <Text dimColor wrap="truncate">
         in {listName} · {card.shortUrl}
       </Text>
+      {memberNames.length > 0 ? (
+        <Text wrap="truncate">
+          <Text dimColor>members: </Text>
+          <Text color={TRELLO_BLUE}>
+            {memberNames.map((name) => `@${name}`).join(" ")}
+          </Text>
+        </Text>
+      ) : null}
       {card.labels.length > 0 ? (
         <Box marginTop={1} gap={1}>
           {card.labels.map((label) => (
@@ -228,24 +268,81 @@ function CardDetail({
           ))}
         </Box>
       ) : null}
-      {card.due ? (
+      {card.due || card.start ? (
         <Box marginTop={1}>
-          <Text color={dueHex(status)}>
-            Due {formatDue(card.due)}
-            {status === "complete" ? " ✓" : status === "overdue" ? " (overdue)" : ""}
-          </Text>
+          {card.start ? <Text dimColor>start {formatDue(card.start)} </Text> : null}
+          {card.due ? (
+            <Text color={dueHex(status)}>
+              due {formatDue(card.due)}
+              {status === "complete" ? " ✓" : status === "overdue" ? " (overdue)" : ""}
+            </Text>
+          ) : null}
         </Box>
       ) : null}
-      {checkItems > 0 ? (
-        <Text dimColor>
-          Checklist {checked}/{checkItems}
-        </Text>
+      {chips.length > 0 ? (
+        <Box marginTop={1}>
+          <ChipRow chips={chips} />
+        </Box>
       ) : null}
       {card.desc ? (
-        <Box marginTop={1} width={Math.min(width - 4, 78)}>
-          <Text>{truncateLines(card.desc, 18)}</Text>
+        <Box marginTop={1}>
+          <Text>{truncateLines(card.desc, 10)}</Text>
         </Box>
       ) : null}
+      {!extras ? (
+        <Box marginTop={1}>
+          <Text dimColor>
+            loading details…
+            {checkItems > 0 ? ` (checklist ${checked}/${checkItems})` : ""}
+          </Text>
+        </Box>
+      ) : (
+        <>
+          {extras.error ? <Text color="#eb5a46">{extras.error}</Text> : null}
+          {extras.checklists.map((checklist) => (
+            <Box key={checklist.id} flexDirection="column" marginTop={1}>
+              <Text bold>{checklist.name}</Text>
+              {checklist.items.slice(0, 6).map((item) => (
+                <Text key={item.id} wrap="truncate">
+                  {item.complete ? <Text color="#61bd4f">☑ </Text> : "☐ "}
+                  <Text dimColor={item.complete} strikethrough={item.complete}>
+                    {item.name}
+                  </Text>
+                </Text>
+              ))}
+              {checklist.items.length > 6 ? (
+                <Text dimColor>… {checklist.items.length - 6} more</Text>
+              ) : null}
+            </Box>
+          ))}
+          {extras.attachments.length > 0 ? (
+            <Box flexDirection="column" marginTop={1}>
+              <Text bold>📎 {extras.attachments.length} attachments</Text>
+              {extras.attachments.slice(0, 4).map((attachment) => (
+                <Text key={attachment.id} dimColor wrap="truncate">
+                  {attachment.name}
+                </Text>
+              ))}
+              {extras.attachments.length > 4 ? (
+                <Text dimColor>… {extras.attachments.length - 4} more</Text>
+              ) : null}
+            </Box>
+          ) : null}
+          {extras.comments.length > 0 ? (
+            <Box flexDirection="column" marginTop={1}>
+              <Text bold>💬 comments</Text>
+              {extras.comments.slice(0, 3).map((comment) => (
+                <Box key={comment.id} flexDirection="column">
+                  <Text dimColor wrap="truncate">
+                    {comment.author} · {comment.date.slice(0, 16).replace("T", " ")}
+                  </Text>
+                  <Text wrap="truncate-end">{truncateLines(comment.text, 2)}</Text>
+                </Box>
+              ))}
+            </Box>
+          ) : null}
+        </>
+      )}
     </Box>
   );
 }
@@ -269,27 +366,43 @@ function BoardView({
   const [col, setCol] = useState(0);
   const [row, setRow] = useState(0);
   const [detail, setDetail] = useState(false);
+  const [extras, setExtras] = useState<Map<string, CardExtras>>(new Map());
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [board, lists, cards] = await Promise.all([
+      const [board, lists, cards, customFieldsRaw, members] = await Promise.all([
         client.boardGet(boardId, { fields: "name" }) as Promise<{ name: string }>,
         client.boardLists(boardId, {
           filter: "open",
           fields: "name,pos,color",
         }) as Promise<UiList[]>,
         client.boardCards(boardId, {
-          fields: "name,desc,due,dueComplete,idList,pos,shortUrl,labels,badges",
+          fields:
+            "name,desc,due,start,dueComplete,idList,pos,shortUrl,labels,badges,idMembers",
+          customFieldItems: true,
         }) as Promise<UiCard[]>,
+        client.boardCustomFields(boardId),
+        client.boardMembers(boardId) as Promise<
+          Array<{ id: string; fullName?: string; username?: string }>
+        >,
       ]);
       const cardsByList = new Map<string, UiCard[]>();
       for (const list of lists) cardsByList.set(list.id, []);
       for (const card of [...cards].sort((a, b) => a.pos - b.pos)) {
         cardsByList.get(card.idList)?.push(card);
       }
-      setData({ name: board.name, lists, cardsByList });
+      setExtras(new Map());
+      setData({
+        name: board.name,
+        lists,
+        cardsByList,
+        customFields: toCustomFieldDefs(customFieldsRaw),
+        membersById: new Map(
+          members.map((m) => [m.id, m.fullName || m.username || "member"]),
+        ),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -300,6 +413,67 @@ function BoardView({
   useEffect(() => {
     void load();
   }, [load]);
+
+  const loadExtras = useCallback(
+    async (card: UiCard) => {
+      if (extras.has(card.id)) return;
+      try {
+        const [attachments, checklists, actions] = await Promise.all([
+          client.cardAttachments(card.id) as Promise<
+            Array<{ id: string; name: string }>
+          >,
+          client.get(`/cards/${card.id}/checklists`) as Promise<
+            Array<{
+              id: string;
+              name: string;
+              checkItems?: Array<{ id: string; name: string; state?: string }>;
+            }>
+          >,
+          client.cardActions(card.id, { filter: "commentCard", limit: 5 }) as Promise<
+            Array<{
+              id: string;
+              date: string;
+              memberCreator?: { fullName?: string; username?: string };
+              data?: { text?: string };
+            }>
+          >,
+        ]);
+        setExtras((prev) =>
+          new Map(prev).set(card.id, {
+            attachments: attachments.map((a) => ({ id: a.id, name: a.name })),
+            checklists: checklists.map((cl) => ({
+              id: cl.id,
+              name: cl.name,
+              items: (cl.checkItems ?? []).map((item) => ({
+                id: item.id,
+                name: item.name,
+                complete: item.state === "complete",
+              })),
+            })),
+            comments: actions.map((action) => ({
+              id: action.id,
+              author:
+                action.memberCreator?.fullName ??
+                action.memberCreator?.username ??
+                "unknown",
+              date: action.date,
+              text: action.data?.text ?? "",
+            })),
+          }),
+        );
+      } catch (err) {
+        setExtras((prev) =>
+          new Map(prev).set(card.id, {
+            attachments: [],
+            checklists: [],
+            comments: [],
+            error: err instanceof Error ? err.message : String(err),
+          }),
+        );
+      }
+    },
+    [client, extras],
+  );
 
   useInput((input, key) => {
     if (detail) {
@@ -334,6 +508,8 @@ function BoardView({
     } else if (key.downArrow || input === "j") {
       if (safeRow >= 0 && safeRow < cards.length - 1) setRow(safeRow + 1);
     } else if (key.return && safeRow >= 0) {
+      const focusedCard = cards[safeRow];
+      if (focusedCard) void loadExtras(focusedCard);
       setDetail(true);
     }
   });
@@ -367,7 +543,9 @@ function BoardView({
     Math.max(0, lists.length - visibleCols),
   );
   const shown = lists.slice(colStart, colStart + visibleCols);
-  const maxCards = Math.max(1, Math.floor((rows - 7) / CARD_HEIGHT));
+  const frontFields = data.customFields.filter((def) => def.cardFront);
+  const cardHeight = frontFields.length > 0 ? 5 : 4;
+  const maxCards = Math.max(1, Math.floor((rows - 7) / cardHeight));
 
   return (
     <Box flexDirection="column" paddingX={1}>
@@ -383,7 +561,14 @@ function BoardView({
         </Text>
       </Box>
       {detail && focusedCard ? (
-        <CardDetail card={focusedCard} listName={lists[safeCol].name} width={columns} />
+        <CardDetail
+          card={focusedCard}
+          listName={lists[safeCol].name}
+          width={columns}
+          defs={data.customFields}
+          membersById={data.membersById}
+          extras={extras.get(focusedCard.id)}
+        />
       ) : (
         <Box>
           {colStart > 0 ? <Text dimColor>‹ </Text> : null}
@@ -396,6 +581,8 @@ function BoardView({
               focusedRow={colStart + i === safeCol ? safeRow : null}
               width={COL_WIDTH}
               maxCards={maxCards}
+              cardHeight={cardHeight}
+              frontFields={frontFields}
             />
           ))}
           {colStart + visibleCols < lists.length ? <Text dimColor>›</Text> : null}
