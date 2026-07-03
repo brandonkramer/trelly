@@ -1,10 +1,17 @@
 {
   "name": "trello-cli",
   "version": "0.1.0",
-  "private": true,
   "description": "Fast Trello CLI with multi-profile auth and MCP server",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brandonkramer/trello-cli.git"
+  },
+  "files": [
+    "bin/",
+    "src/"
+  ],
   "bin": {
     "trello": "./bin/trello",
     "trello-mcp": "./bin/trello-mcp"
@@ -26,12 +33,15 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "commander": "^15.0.0",
+    "ink": "^7.1.0",
+    "react": "^19.2.7",
+    "tsx": "^4.22.5",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.2",
     "@types/node": "^26.1.0",
-    "tsx": "^4.22.5",
+    "@types/react": "^19.2.17",
     "typescript": "^6.0.3"
   }
 }

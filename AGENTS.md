@@ -37,7 +37,9 @@ Run all three checks before committing.
   descriptions must say which
 - Never read, log, or commit credentials (`~/.config/trello-cli/config.json`);
   auth goes in the `Authorization` header, never in URLs
-- No live Trello API calls in tests; package is `private` — never publish
+- No live Trello API calls in tests
+- Publishable to npm (`npx` / `bunx`); bins run TypeScript via `bin/run-ts`
+  (Bun if present, else `tsx` — kept in `dependencies` for Node installs)
 
 ## Commits & PRs
 
