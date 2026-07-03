@@ -12,17 +12,19 @@ import { registerListCommands } from "./commands/lists.ts";
 import { registerMemberCommands } from "./commands/members.ts";
 import { registerOrgCommands } from "./commands/orgs.ts";
 import { registerSearchCommands } from "./commands/search.ts";
-import { registerUiCommand } from "./commands/ui.ts";
+import { launchUi, registerUiCommand } from "./commands/ui.ts";
 import { registerWebhookCommands } from "./commands/webhooks.ts";
 
 const program = new Command();
 
 program
   .name("trello")
-  .description("Fast Trello CLI with multi-profile auth")
+  .description("Fast Trello CLI — bare `trello` opens the interactive board UI")
   .version(packageVersion())
   .option("-p, --profile <name>", "Auth profile (or TRELLO_PROFILE env)")
-  .option("--pretty", "Pretty-print JSON output", false);
+  .option("--json", "Output the raw JSON envelope", false)
+  .option("--pretty", "Indent --json output", false)
+  .action((_opts, cmd) => launchUi(undefined, cmd));
 
 registerAuthCommands(program);
 registerBoardCommands(program);

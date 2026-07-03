@@ -17,6 +17,7 @@ import {
 } from "../../auth/profiles.ts";
 import { openInBrowser, readLine } from "../../util/runtime.ts";
 import { failure, printResult, success } from "../context.ts";
+import { rootOpts } from "./run.ts";
 
 const POWER_UPS_ADMIN = "https://trello.com/power-ups/admin";
 
@@ -29,7 +30,7 @@ export function registerAuthCommands(program: Command): void {
     .option("-k, --api-key <key>", "Trello API key to save")
     .option("--no-open", "Do not open Power-Ups admin in the browser")
     .action(async (opts, cmd) => {
-      const root = cmd.parent?.parent as Command;
+      const root = rootOpts(cmd);
       try {
         if (opts.open !== false) {
           process.stderr.write(`Opening ${POWER_UPS_ADMIN}\n`);
@@ -68,13 +69,10 @@ One-time setup (per Trello account / Power-Up):
             allowedOrigin: SETUP_ALLOWED_ORIGIN,
             next: "Run: trello auth login",
           }),
-          root.opts().pretty,
+          root,
         );
       } catch (err) {
-        printResult(
-          failure(err instanceof Error ? err.message : String(err)),
-          root.opts().pretty,
-        );
+        printResult(failure(err instanceof Error ? err.message : String(err)), root);
         process.exitCode = 1;
       }
     });
@@ -97,7 +95,7 @@ One-time setup (per Trello account / Power-Up):
       "Request read,write,account scope and never-expiring token",
     )
     .action(async (opts, cmd) => {
-      const root = cmd.parent?.parent as Command;
+      const root = rootOpts(cmd);
       try {
         let apiKey = (opts.apiKey as string | undefined) ?? getAppApiKey() ?? undefined;
         let token = opts.token as string | undefined;
@@ -169,13 +167,10 @@ One-time setup (per Trello account / Power-Up):
             configPath: configPath(),
             member: me,
           }),
-          root.opts().pretty,
+          root,
         );
       } catch (err) {
-        printResult(
-          failure(err instanceof Error ? err.message : String(err)),
-          root.opts().pretty,
-        );
+        printResult(failure(err instanceof Error ? err.message : String(err)), root);
         process.exitCode = 1;
       }
     });
@@ -184,7 +179,7 @@ One-time setup (per Trello account / Power-Up):
     .command("list")
     .description("List saved profiles")
     .action((_opts, cmd) => {
-      const root = cmd.parent?.parent as Command;
+      const root = rootOpts(cmd);
       const config = loadConfig();
       printResult(
         success(config.defaultProfile, {
@@ -196,7 +191,7 @@ One-time setup (per Trello account / Power-Up):
             isDefault: name === config.defaultProfile,
           })),
         }),
-        root.opts().pretty,
+        root,
       );
     });
 
@@ -204,18 +199,15 @@ One-time setup (per Trello account / Power-Up):
     .command("use <profile>")
     .description("Set default profile")
     .action((profile, _opts, cmd) => {
-      const root = cmd.parent?.parent as Command;
+      const root = rootOpts(cmd);
       try {
         setDefaultProfile(profile);
         printResult(
           success(profile, { message: `Default profile is now "${profile}"` }),
-          root.opts().pretty,
+          root,
         );
       } catch (err) {
-        printResult(
-          failure(err instanceof Error ? err.message : String(err)),
-          root.opts().pretty,
-        );
+        printResult(failure(err instanceof Error ? err.message : String(err)), root);
         process.exitCode = 1;
       }
     });
@@ -225,20 +217,17 @@ One-time setup (per Trello account / Power-Up):
     .description("Remove a saved profile")
     .option("-p, --profile <name>", "Profile to remove")
     .action((opts, cmd) => {
-      const root = cmd.parent?.parent as Command;
+      const root = rootOpts(cmd);
       const config = loadConfig();
       const profile = opts.profile ?? config.defaultProfile;
       try {
         removeProfile(profile);
         printResult(
           success(profile, { message: `Removed profile "${profile}"` }),
-          root.opts().pretty,
+          root,
         );
       } catch (err) {
-        printResult(
-          failure(err instanceof Error ? err.message : String(err)),
-          root.opts().pretty,
-        );
+        printResult(failure(err instanceof Error ? err.message : String(err)), root);
         process.exitCode = 1;
       }
     });
@@ -248,12 +237,12 @@ One-time setup (per Trello account / Power-Up):
     .description("Print browser authorization URL")
     .option("-k, --api-key <key>", "Trello API key")
     .action(async (opts, cmd) => {
-      const root = cmd.parent?.parent as Command;
+      const root = rootOpts(cmd);
       let apiKey = (opts.apiKey as string | undefined) ?? getAppApiKey() ?? undefined;
       if (!apiKey) {
         process.stderr.write("API key: ");
         apiKey = (await readLine()).trim();
       }
-      printResult(success("env", { url: authLoginUrl(apiKey) }), root.opts().pretty);
+      printResult(success("env", { url: authLoginUrl(apiKey) }), root);
     });
 }

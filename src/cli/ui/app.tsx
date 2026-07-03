@@ -1,7 +1,21 @@
 import { Box, Text, useApp, useInput, useStdout } from "ink";
 import { useCallback, useEffect, useState } from "react";
 import type { TrelloClient } from "../../api/client.ts";
-import { dueHex, dueStatus, formatDue, labelHex } from "./palette.ts";
+import {
+  type CardChip,
+  customFieldChips,
+  toCustomFieldDefs,
+  type UiCustomFieldDef,
+  type UiCustomFieldItem,
+} from "./custom-fields.ts";
+import {
+  dueHex,
+  dueStatus,
+  formatDue,
+  labelHex,
+  listAccentHex,
+  TRELLO_BLUE,
+} from "./palette.ts";
 
 export type UiLabel = { id: string; name: string; color: string | null };
 
@@ -21,18 +35,19 @@ export type UiCard = {
     comments?: number;
     attachments?: number;
   };
+  customFieldItems?: UiCustomFieldItem[];
 };
 
-export type UiList = { id: string; name: string };
+export type UiList = { id: string; name: string; color?: string | null };
 
 type BoardData = {
   name: string;
   lists: UiList[];
   cardsByList: Map<string, UiCard[]>;
+  customFields: UiCustomFieldDef[];
 };
 
 const COL_WIDTH = 30;
-const CARD_HEIGHT = 4; // borders + name line + badge line
 
 function truncate(text: string, width: number): string {
   return text.length <= width ? text : `${text.slice(0, Math.max(0, width - 1))}…`;
@@ -49,6 +64,7 @@ function CardBadges({ card }: { card: UiCard }) {
   const checkItems = card.badges?.checkItems ?? 0;
   const checked = card.badges?.checkItemsChecked ?? 0;
   const comments = card.badges?.comments ?? 0;
+  const attachments = card.badges?.attachments ?? 0;
   return (
     <Text wrap="truncate">
       {card.labels.map((label) => (
@@ -68,7 +84,26 @@ function CardBadges({ card }: { card: UiCard }) {
         </Text>
       ) : null}
       {card.desc ? <Text dimColor>≡ </Text> : null}
-      {comments > 0 ? <Text dimColor>💬{comments}</Text> : null}
+      {comments > 0 ? <Text dimColor>💬{comments} </Text> : null}
+      {attachments > 0 ? <Text dimColor>📎{attachments}</Text> : null}
+    </Text>
+  );
+}
+
+function ChipRow({ chips }: { chips: CardChip[] }) {
+  return (
+    <Text wrap="truncate">
+      {chips.map((chip) => (
+        <Text key={chip.id}>
+          <Text
+            backgroundColor={chip.color ? labelHex(chip.color) : undefined}
+            color={chip.color ? "#1d2125" : undefined}
+            dimColor={!chip.color}
+          >
+            {` ${chip.label} `}
+          </Text>{" "}
+        </Text>
+      ))}
     </Text>
   );
 }
@@ -77,24 +112,35 @@ function CardBox({
   card,
   focused,
   width,
+  accent,
+  height,
+  frontFields,
 }: {
   card: UiCard;
   focused: boolean;
   width: number;
+  accent: string;
+  height: number;
+  frontFields: UiCustomFieldDef[];
 }) {
+  const complete = card.dueComplete === true;
+  const chips =
+    frontFields.length > 0 ? customFieldChips(frontFields, card.customFieldItems) : [];
   return (
     <Box
       flexDirection="column"
       borderStyle="round"
-      borderColor={focused ? "cyan" : "gray"}
+      borderColor={focused ? accent : "gray"}
       width={width}
-      height={CARD_HEIGHT}
+      height={height}
       paddingX={1}
     >
       <Text bold={focused} wrap="truncate">
-        {truncate(card.name, width - 4)}
+        {complete ? <Text color="#61bd4f">✓ </Text> : null}
+        {truncate(card.name, width - 4 - (complete ? 2 : 0))}
       </Text>
       <CardBadges card={card} />
+      {height >= 5 ? <ChipRow chips={chips} /> : null}
     </Box>
   );
 }
@@ -115,6 +161,7 @@ function Column({
   maxCards: number;
 }) {
   const total = cards.length;
+  const accent = listAccentHex(list.color);
   let start = 0;
   if (focusedRow !== null && focusedRow >= maxCards) {
     start = focusedRow - maxCards + 1;
@@ -123,9 +170,15 @@ function Column({
   const below = total - (start + visible.length);
   return (
     <Box flexDirection="column" width={width} marginRight={1}>
-      <Text bold color={focused ? "cyan" : undefined} wrap="truncate">
-        {truncate(list.name, width - 6)} <Text dimColor>({total})</Text>
-      </Text>
+      {focused ? (
+        <Text backgroundColor={accent} color="#1d2125" bold wrap="truncate">
+          {` ${truncate(list.name, width - 8)} (${total}) `}
+        </Text>
+      ) : (
+        <Text bold color={accent} wrap="truncate">
+          {truncate(list.name, width - 6)} <Text dimColor>({total})</Text>
+        </Text>
+      )}
       {start > 0 ? <Text dimColor> ↑ {start} more</Text> : null}
       {visible.map((card, i) => (
         <CardBox
@@ -133,6 +186,7 @@ function Column({
           card={card}
           width={width - 1}
           focused={focusedRow === start + i}
+          accent={accent}
         />
       ))}
       {total === 0 ? <Text dimColor> (empty)</Text> : null}
@@ -196,14 +250,16 @@ function CardDetail({
   );
 }
 
-export function App({
+function BoardView({
   client,
   boardId,
   profileName,
+  onBack,
 }: {
   client: TrelloClient;
   boardId: string;
   profileName: string;
+  onBack?: () => void;
 }) {
   const { exit } = useApp();
   const { stdout } = useStdout();
@@ -220,9 +276,10 @@ export function App({
     try {
       const [board, lists, cards] = await Promise.all([
         client.boardGet(boardId, { fields: "name" }) as Promise<{ name: string }>,
-        client.boardLists(boardId, { filter: "open", fields: "name,pos" }) as Promise<
-          UiList[]
-        >,
+        client.boardLists(boardId, {
+          filter: "open",
+          fields: "name,pos,color",
+        }) as Promise<UiList[]>,
         client.boardCards(boardId, {
           fields: "name,desc,due,dueComplete,idList,pos,shortUrl,labels,badges",
         }) as Promise<UiCard[]>,
@@ -257,6 +314,10 @@ export function App({
       void load();
       return;
     }
+    if ((key.escape || key.backspace) && onBack) {
+      onBack();
+      return;
+    }
     if (!data || data.lists.length === 0) return;
     const lists = data.lists;
     const safeCol = Math.min(col, lists.length - 1);
@@ -286,7 +347,7 @@ export function App({
   if (error && !data) {
     return (
       <Box flexDirection="column">
-        <Text color="red"> {error}</Text>
+        <Text color="#eb5a46"> {error}</Text>
         <Text dimColor> r retry · q quit</Text>
       </Box>
     );
@@ -344,9 +405,162 @@ export function App({
         <Text dimColor>
           {detail
             ? "esc/⏎/q back"
-            : "←→ lists · ↑↓ cards · ⏎ detail · r refresh · q quit"}
+            : `←→ lists · ↑↓ cards · ⏎ detail · r refresh${onBack ? " · esc boards" : ""} · q quit`}
         </Text>
       </Box>
     </Box>
+  );
+}
+
+export type UiBoard = {
+  id: string;
+  name: string;
+  shortUrl?: string;
+  closed?: boolean;
+  prefs?: {
+    backgroundColor?: string | null;
+    backgroundTopColor?: string | null;
+  };
+};
+
+function boardDotHex(board: UiBoard): string {
+  return board.prefs?.backgroundColor ?? board.prefs?.backgroundTopColor ?? TRELLO_BLUE;
+}
+
+function BoardPicker({
+  client,
+  profileName,
+  onSelect,
+}: {
+  client: TrelloClient;
+  profileName: string;
+  onSelect: (board: UiBoard) => void;
+}) {
+  const { exit } = useApp();
+  const { stdout } = useStdout();
+  const [boards, setBoards] = useState<UiBoard[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [idx, setIdx] = useState(0);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = (await client.memberBoards("me", {
+        filter: "open",
+        fields: "name,shortUrl,closed,prefs",
+      })) as UiBoard[];
+      setBoards(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }, [client]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  useInput((input, key) => {
+    if (input === "q") {
+      exit();
+      return;
+    }
+    if (input === "r") {
+      void load();
+      return;
+    }
+    if (!boards || boards.length === 0) return;
+    const safeIdx = Math.min(idx, boards.length - 1);
+    if (key.upArrow || input === "k") {
+      setIdx(Math.max(0, safeIdx - 1));
+    } else if (key.downArrow || input === "j") {
+      setIdx(Math.min(boards.length - 1, safeIdx + 1));
+    } else if (key.return) {
+      onSelect(boards[safeIdx]);
+    }
+  });
+
+  const rows = stdout?.rows ?? 24;
+
+  if (loading && !boards) return <Text> Loading boards…</Text>;
+  if (error && !boards) {
+    return (
+      <Box flexDirection="column">
+        <Text color="#eb5a46"> {error}</Text>
+        <Text dimColor> r retry · q quit</Text>
+      </Box>
+    );
+  }
+  if (!boards) return null;
+
+  const safeIdx = boards.length > 0 ? Math.min(idx, boards.length - 1) : 0;
+  const maxRows = Math.max(1, rows - 6);
+  const start = safeIdx >= maxRows ? safeIdx - maxRows + 1 : 0;
+  const visible = boards.slice(start, start + maxRows);
+  const below = boards.length - (start + visible.length);
+
+  return (
+    <Box flexDirection="column" paddingX={1}>
+      <Box marginBottom={1}>
+        <Text backgroundColor="#0079bf" color="#ffffff" bold>
+          {" Boards "}
+        </Text>
+        <Text dimColor>
+          {"  "}
+          {profileName} · {boards.length} open
+          {loading ? " · refreshing…" : ""}
+          {error ? ` · ${error}` : ""}
+        </Text>
+      </Box>
+      {boards.length === 0 ? <Text dimColor> (no open boards)</Text> : null}
+      {start > 0 ? <Text dimColor> ↑ {start} more</Text> : null}
+      {visible.map((board, i) => {
+        const focused = start + i === safeIdx;
+        return (
+          <Text key={board.id} wrap="truncate">
+            {focused ? <Text color={TRELLO_BLUE}>❯ </Text> : "  "}
+            <Text color={boardDotHex(board)}>● </Text>
+            <Text bold={focused}>{board.name}</Text>
+            {board.shortUrl ? <Text dimColor> {board.shortUrl}</Text> : null}
+          </Text>
+        );
+      })}
+      {below > 0 ? <Text dimColor> ↓ {below} more</Text> : null}
+      <Box marginTop={1}>
+        <Text dimColor>↑↓ move · ⏎ open · r refresh · q quit</Text>
+      </Box>
+    </Box>
+  );
+}
+
+export function App({
+  client,
+  boardId,
+  profileName,
+}: {
+  client: TrelloClient;
+  boardId?: string;
+  profileName: string;
+}) {
+  const [picked, setPicked] = useState<UiBoard | null>(null);
+  if (boardId) {
+    return <BoardView client={client} boardId={boardId} profileName={profileName} />;
+  }
+  if (!picked) {
+    return (
+      <BoardPicker client={client} profileName={profileName} onSelect={setPicked} />
+    );
+  }
+  return (
+    <BoardView
+      key={picked.id}
+      client={client}
+      boardId={picked.id}
+      profileName={profileName}
+      onBack={() => setPicked(null)}
+    />
   );
 }

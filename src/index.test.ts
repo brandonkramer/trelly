@@ -3,7 +3,8 @@ import { describe, it } from "node:test";
 import { parseTrelloResponse, trelloErrorMessage } from "./api/http.ts";
 import { authLoginUrl } from "./auth/profiles.ts";
 import { parseKvPairs } from "./cli/context.ts";
-import { dueStatus, labelHex } from "./cli/ui/palette.ts";
+import { dueStatus, labelHex, listAccentHex } from "./cli/ui/palette.ts";
+import { isBoard, isCard, isLabel, isList } from "./cli/ui/shapes.ts";
 
 describe("parseKvPairs", () => {
   it("parses key=value pairs", () => {
@@ -59,6 +60,13 @@ describe("ui palette", () => {
     assert.equal(labelHex("mauve"), "#6b778c");
   });
 
+  it("maps list accents, falling back to Trello blue", () => {
+    assert.equal(listAccentHex(null), "#0079bf");
+    assert.equal(listAccentHex(undefined), "#0079bf");
+    assert.equal(listAccentHex("teal"), "#6cc3e0");
+    assert.equal(listAccentHex("purple"), "#0079bf");
+  });
+
   it("classifies due status", () => {
     const now = new Date("2026-07-03T12:00:00Z");
     assert.equal(dueStatus(null, false, now), "none");
@@ -66,5 +74,18 @@ describe("ui palette", () => {
     assert.equal(dueStatus("2026-07-01T00:00:00Z", false, now), "overdue");
     assert.equal(dueStatus("2026-07-03T18:00:00Z", false, now), "soon");
     assert.equal(dueStatus("2026-08-01T00:00:00Z", false, now), "later");
+  });
+});
+
+describe("ui shapes", () => {
+  it("distinguishes cards, lists, labels, and boards", () => {
+    const card = { id: "c", name: "Card", idList: "l", idBoard: "b", pos: 1 };
+    const list = { id: "l", name: "List", idBoard: "b", pos: 2, closed: false };
+    const label = { id: "lb", name: "bug", color: "red", idBoard: "b" };
+    const board = { id: "b", name: "Board", prefs: {}, idOrganization: "o" };
+    assert.ok(isCard(card) && !isCard(list) && !isCard(board));
+    assert.ok(isList(list) && !isList(card) && !isList(label));
+    assert.ok(isLabel(label) && !isLabel(list) && !isLabel(card));
+    assert.ok(isBoard(board) && !isBoard(card) && !isBoard(list));
   });
 });

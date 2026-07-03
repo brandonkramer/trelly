@@ -1,15 +1,16 @@
 # AGENTS.md
 
 trello-cli — Trello CLI + MCP stdio server. TypeScript, run with **Bun**
-(`bin/run-ts` falls back to tsx/Node; CI runs the same checks via npm on Node 22).
-All output is a JSON envelope: `{ ok, profile, data }` /
-`{ ok: false, error, status?, details? }`.
+(`bin/run-ts` falls back to tsx/Node; CI runs the same checks on Bun).
+Output is human/Trello-styled by default (ink, `src/cli/ui/static.tsx`); the
+`--json` flag prints the envelope `{ ok, profile, data }` /
+`{ ok: false, error, status?, details? }` (`--pretty` indents it).
 
 ## Layout
 
 - `src/api/` — `http.ts` (30s timeout, 429 retry), `client.ts` (one method per endpoint)
 - `src/auth/` — profiles in `~/.config/trello-cli/config.json`, loopback browser flow
-- `src/cli/` — commander program: `index.ts`, `context.ts`, `commands/`
+- `src/cli/` — commander program: `index.ts`, `context.ts`, `commands/`, `ui/` (ink kanban TUI)
 - `src/mcp/` — `server.ts`, `tools/` (tool registrations), `handlers.ts`
 - `bin/` — bash launchers: `trello`, `trello-mcp`
 
@@ -29,7 +30,8 @@ Run all three checks before committing.
 
 - Biome style (double quotes, 2-space indent, 88 cols); TS strict; `import type`
   for types; explicit `.ts` import extensions; named exports only
-- CLI: JSON on stdout, logs/prompts on stderr, `process.exitCode = 1` on failure.
+- CLI: results on stdout (human by default, `--json` for the envelope),
+  logs/prompts on stderr, `process.exitCode = 1` on failure.
   MCP server: never write to stdout (stdio transport)
 - New MCP tools go in `src/mcp/tools/` (by resource): zod input schema, envelope
   `outputSchema`, `readOnlyHint`/`destructiveHint` annotations
@@ -47,3 +49,8 @@ Run all three checks before committing.
 - Branch `type/short-description` off `main`; one logical change per PR; say how
   you verified it
 - Never force-push `main`
+
+## Agent skills
+
+Portable skills for Cursor, Claude Code, Pi, Codex: [`skills/`](skills/README.md)
+(`trello-cli`, `trello-mcp`). Cursor: symlinked under `.cursor/skills/`.

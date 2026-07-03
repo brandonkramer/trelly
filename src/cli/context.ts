@@ -34,9 +34,18 @@ export function failure(
   return { ok: false, error, ...extra };
 }
 
-export function printResult(result: CliResult | CliError, pretty = false): void {
-  const text = pretty ? JSON.stringify(result, null, 2) : JSON.stringify(result);
-  console.log(text);
+export type OutputOptions = { json?: boolean; pretty?: boolean };
+
+export function printResult(
+  result: CliResult | CliError,
+  opts: OutputOptions = {},
+): void {
+  if (opts.json) {
+    const text = opts.pretty ? JSON.stringify(result, null, 2) : JSON.stringify(result);
+    console.log(text);
+    return;
+  }
+  void import("./ui/static.tsx").then(({ renderResult }) => renderResult(result));
 }
 
 export function parseKvPairs(pairs: string[] | undefined): Record<string, string> {

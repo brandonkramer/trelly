@@ -3,13 +3,19 @@ export const TRELLO_LABEL_HEX: Record<string, string> = {
   yellow: "#f2d600",
   orange: "#ff9f1a",
   red: "#eb5a46",
-  purple: "#c377e0",
+  purple: "#0079bf",
   blue: "#0079bf",
   sky: "#00c2e0",
   lime: "#51e898",
   pink: "#ff78cb",
   black: "#344563",
+  // List-color values (Trello list colors) beyond the classic label set
+  teal: "#6cc3e0",
+  magenta: "#e774bb",
+  gray: "#8590a2",
 };
+
+export const TRELLO_BLUE = "#0079bf";
 
 const FALLBACK_HEX = "#6b778c";
 
@@ -17,6 +23,11 @@ const FALLBACK_HEX = "#6b778c";
 export function labelHex(color: string | null | undefined): string {
   const base = (color ?? "").split("_")[0] ?? "";
   return TRELLO_LABEL_HEX[base] ?? FALLBACK_HEX;
+}
+
+/** Accent for a Trello list: its set color, else Trello blue. */
+export function listAccentHex(color: string | null | undefined): string {
+  return color ? labelHex(color) : TRELLO_BLUE;
 }
 
 export type DueStatus = "none" | "complete" | "overdue" | "soon" | "later";

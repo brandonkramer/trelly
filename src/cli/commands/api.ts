@@ -18,30 +18,27 @@ export function registerApiCommand(program: Command): void {
     .requiredOption("-X, --method <method>", "HTTP method")
     .requiredOption("--path <path>", "API path e.g. /boards/{id}")
     .option("--query <kv...>", "Query key=value pairs")
-    .option("--json <json>", "JSON request body")
+    .option("--body <json>", "JSON request body")
     .action(async (opts, cmd) => {
       const root = rootOpts(cmd);
       try {
         const { profileName, client } = getClient(root.profile);
-        const body = parseJsonFlag(opts.json, "--json");
+        const body = parseJsonFlag(opts.body, "--body");
         const data = await client.request(
           opts.method,
           opts.path,
           parseKvPairs(opts.query),
           body as JsonValue | undefined,
         );
-        printResult(success(profileName, data), root.pretty);
+        printResult(success(profileName, data), root);
       } catch (err) {
         if (err instanceof TrelloError) {
           printResult(
             failure(err.message, { status: err.status, details: err.body }),
-            root.pretty,
+            root,
           );
         } else {
-          printResult(
-            failure(err instanceof Error ? err.message : String(err)),
-            root.pretty,
-          );
+          printResult(failure(err instanceof Error ? err.message : String(err)), root);
         }
         process.exitCode = 1;
       }
