@@ -1,4 +1,4 @@
-<p align="center">
+<p>
   <img src="assets/logo.svg" alt="Trelly" width="128" height="128" />
 </p>
 

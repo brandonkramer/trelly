@@ -277,36 +277,39 @@ function CardDetail({
       ? comments[safeFocus - attachments.length]
       : undefined;
 
-  const submit = useCallback(async () => {
-    const text = buffer.trim();
-    if (!text) return;
-    setBusy(true);
-    setNotice(null);
-    try {
-      if (mode === "attach") {
-        if (/^https?:\/\//i.test(text)) {
-          await client.cardAddAttachment(card.id, { url: text });
+  const submit = useCallback(
+    async (raw: string) => {
+      const text = raw.trim();
+      if (!text) return;
+      setBusy(true);
+      setNotice(null);
+      try {
+        if (mode === "attach") {
+          if (/^https?:\/\//i.test(text)) {
+            await client.cardAddAttachment(card.id, { url: text });
+          } else {
+            const path = text.startsWith("~/") ? join(homedir(), text.slice(2)) : text;
+            await client.cardUploadAttachment(card.id, attachmentForm(path));
+          }
+          setNotice({ text: "✓ attachment added" });
         } else {
-          const path = text.startsWith("~/") ? join(homedir(), text.slice(2)) : text;
-          await client.cardUploadAttachment(card.id, attachmentForm(path));
+          await client.cardComment(card.id, text);
+          setNotice({ text: "✓ comment added" });
         }
-        setNotice({ text: "✓ attachment added" });
-      } else {
-        await client.cardComment(card.id, text);
-        setNotice({ text: "✓ comment added" });
+        setMode("view");
+        setBuffer("");
+        onChanged();
+      } catch (err) {
+        setNotice({
+          text: err instanceof Error ? err.message : String(err),
+          error: true,
+        });
+      } finally {
+        setBusy(false);
       }
-      setMode("view");
-      setBuffer("");
-      onChanged();
-    } catch (err) {
-      setNotice({
-        text: err instanceof Error ? err.message : String(err),
-        error: true,
-      });
-    } finally {
-      setBusy(false);
-    }
-  }, [buffer, mode, client, card.id, onChanged]);
+    },
+    [mode, client, card.id, onChanged],
+  );
 
   useInput((input, key) => {
     if (busy) return;
@@ -314,13 +317,17 @@ function CardDetail({
       if (key.escape) {
         setMode("view");
         setBuffer("");
-      } else if (key.return) {
-        void submit();
-      } else if (key.backspace || key.delete) {
-        setBuffer((prev) => prev.slice(0, -1));
-      } else if (input && !key.ctrl && !key.meta) {
-        setBuffer((prev) => prev + input);
+        return;
       }
+      if (key.backspace || key.delete) {
+        setBuffer((prev) => prev.slice(0, -1));
+        return;
+      }
+      // paste can deliver text and the newline in one event; append before submit
+      const typed = input && !key.ctrl && !key.meta ? input.replace(/[\r\n]/g, "") : "";
+      const next = typed ? buffer + typed : buffer;
+      if (typed) setBuffer(next);
+      if (key.return) void submit(next);
       return;
     }
     if (key.escape || input === "q") {
