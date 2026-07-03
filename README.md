@@ -78,6 +78,8 @@ trelly ui BOARD_ID  # jump straight to a board
 
 Requires a TTY. Keys: **arrows** / **hjkl** move focus, **Enter** card detail, **r** refresh, **q** / **Esc** back or quit.
 
+In card detail: **↑↓** move over attachments and comments, **Enter** opens the focused attachment in your browser or expands/collapses the focused comment, **c** new comment, **r** reply to the focused comment (prefills `@author`), **a** attach a file path or URL, **Esc** back.
+
 See the demo above or run `trelly --help` for all subcommands.
 
 ## Auth
@@ -115,6 +117,7 @@ trelly --profile work boards lists BOARD_ID
 trelly cards create --list LIST_ID --name "Ship feature"
 trelly cards comments CARD_ID
 trelly cards comment CARD_ID --text "Shipped"
+trelly cards add-attachment CARD_ID --file screenshot.png   # or --url https://…
 trelly search "customer onboarding"
 trelly api -X PUT --path /cards/CARD_ID --query idList=LIST_ID
 trelly api -X POST --path /cards --body '{"idList":"LIST_ID","name":"Hi"}'

@@ -1,7 +1,7 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { Box, Text, useApp, useInput, useStdout } from "ink";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { TrelloClient } from "../../api/client.ts";
 import { attachmentForm } from "../../util/attachment.ts";
 import { openInBrowser } from "../../util/runtime.ts";
@@ -263,6 +263,13 @@ function CardDetail({
   const [buffer, setBuffer] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
+  // refs mirror state so several key events in one tick see current values
+  const bufferRef = useRef("");
+  const busyRef = useRef(false);
+  const setComposerBuffer = useCallback((value: string) => {
+    bufferRef.current = value;
+    setBuffer(value);
+  }, []);
 
   const attachments = extras?.attachments ?? [];
   const comments = extras?.comments ?? [];
@@ -280,7 +287,8 @@ function CardDetail({
   const submit = useCallback(
     async (raw: string) => {
       const text = raw.trim();
-      if (!text) return;
+      if (!text || busyRef.current) return;
+      busyRef.current = true;
       setBusy(true);
       setNotice(null);
       try {
@@ -297,7 +305,7 @@ function CardDetail({
           setNotice({ text: "✓ comment added" });
         }
         setMode("view");
-        setBuffer("");
+        setComposerBuffer("");
         onChanged();
       } catch (err) {
         setNotice({
@@ -305,29 +313,29 @@ function CardDetail({
           error: true,
         });
       } finally {
+        busyRef.current = false;
         setBusy(false);
       }
     },
-    [mode, client, card.id, onChanged],
+    [mode, client, card.id, onChanged, setComposerBuffer],
   );
 
   useInput((input, key) => {
-    if (busy) return;
+    if (busyRef.current) return;
     if (mode !== "view") {
       if (key.escape) {
         setMode("view");
-        setBuffer("");
+        setComposerBuffer("");
         return;
       }
       if (key.backspace || key.delete) {
-        setBuffer((prev) => prev.slice(0, -1));
+        setComposerBuffer(bufferRef.current.slice(0, -1));
         return;
       }
       // paste can deliver text and the newline in one event; append before submit
       const typed = input && !key.ctrl && !key.meta ? input.replace(/[\r\n]/g, "") : "";
-      const next = typed ? buffer + typed : buffer;
-      if (typed) setBuffer(next);
-      if (key.return) void submit(next);
+      if (typed) setComposerBuffer(bufferRef.current + typed);
+      if (key.return) void submit(bufferRef.current);
       return;
     }
     if (key.escape || input === "q") {
@@ -354,15 +362,15 @@ function CardDetail({
       });
     } else if (input === "c") {
       setMode("comment");
-      setBuffer("");
+      setComposerBuffer("");
       setNotice(null);
     } else if (input === "r" && focusedComment) {
       setMode("reply");
-      setBuffer(focusedComment.username ? `@${focusedComment.username} ` : "");
+      setComposerBuffer(focusedComment.username ? `@${focusedComment.username} ` : "");
       setNotice(null);
     } else if (input === "a") {
       setMode("attach");
-      setBuffer("");
+      setComposerBuffer("");
       setNotice(null);
     }
   });
