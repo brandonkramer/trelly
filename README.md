@@ -84,29 +84,27 @@ See the demo above or run `trelly --help` for all subcommands.
 
 ## Auth
 
-Two steps: **API key** (app identity, once) → **token** (your account, per profile).
+Two steps: **API key** (app identity, once) → **token** (your account, per profile). After login the CLI is **you** on Trello — same boards and permissions as the website.
 
-Register a throwaway app at [power-ups/admin](https://trello.com/power-ups/admin) — you are **not** installing a Power-Up on your boards. Pick any workspace you **admin** (personal is fine); that choice does not limit which boards you can use. Iframe URL can be any `https://` placeholder (e.g. `https://example.com`). Add `http://127.0.0.1:14189` to **Allowed Origins** for automatic browser login.
+**1 · Get an API key (once).** `trelly auth setup` opens [power-ups/admin](https://trello.com/power-ups/admin) and prompts for the key:
 
-After login the CLI is **you** on Trello — same boards and permissions as the website.
+1. Create a Power-Up — registers the app; nothing is installed on your boards.
+2. Any workspace you **admin** (personal is fine); it doesn't limit board access.
+3. Iframe URL: any `https://` placeholder.
+4. API Key tab → **Generate API Key**; add `http://127.0.0.1:14189` to **Allowed Origins** (for browser login).
+5. Paste the key at the prompt.
 
-```bash
-trelly auth setup
-trelly auth login
-trelly auth login --profile work
-trelly auth login --manual              # paste token if redirect blocked
-trelly auth login --full-access         # never-expiring token
-trelly auth list
-trelly auth use work
-trelly auth logout --profile work
-trelly auth url
-```
+**2 · Log in.** `trelly auth login` — browser opens → **Allow**.
 
-Non-interactive: `trelly auth setup --api-key KEY` then `trelly auth login --api-key KEY --token TOKEN`.
+| Variant | Command |
+|---------|---------|
+| Redirect blocked | `auth login --manual` (paste token) |
+| Never-expiring token | `auth login --full-access` (otherwise 30 days) |
+| More accounts | `auth login --profile work` · `auth use work` · `auth logout -p work` · `-p` on any command |
+| Inspect | `auth list` (profiles) · `auth url` (authorize URL) |
+| Non-interactive | `auth setup --api-key KEY` then `auth login --api-key KEY --token TOKEN` |
 
-Environment override: `TRELLO_APP_API_KEY`, `TRELLO_API_KEY`, `TRELLO_TOKEN`, `TRELLO_PROFILE`.
-
-Credentials: `~/.config/trelly/config.json` (mode `600`).
+Env overrides: `TRELLO_API_KEY` + `TRELLO_TOKEN` (bypass profiles), `TRELLO_PROFILE`, `TRELLO_APP_API_KEY`. Credentials: `~/.config/trelly/config.json` (mode `600`).
 
 ## Usage
 
