@@ -1,10 +1,14 @@
+<p align="center">
+  <img src="assets/logo.svg" alt="Trelly" width="128" height="128" />
+</p>
+
 # Trelly -- Trello CLI
 
 Fast Trello CLI + MCP server ([npm](https://www.npmjs.com/package/trelly): `npm install -g trelly`).
 **Human, Trello-styled output by default**; add `--json` for scripts and automation.
 Commands: **`trelly`** (CLI) and **`trelly-mcp`** (MCP server).
 
-![trelly interactive UI](cli.gif)
+![trelly terminal UI](assets/terminal.gif)
 
 Boards, lists, cards, checklists, labels, custom fields, search, webhooks, multi-profile
 auth, interactive kanban TUI, raw `trelly api` escape hatch.
@@ -31,6 +35,16 @@ bun install
 No Bun? `npm install` in the clone — tsx is the fallback runtime.
 
 Optional: `bun link` / `npm link`, or add `bin/` to `PATH`.
+
+### Updating
+
+```bash
+npm update -g trelly          # or: npm install -g trelly@latest
+brew upgrade trelly           # Homebrew
+```
+
+Auth in `~/.config/trelly/config.json` is kept across upgrades. Reload your IDE after
+updating if you use the agent plugin MCP server.
 
 ## Quick start
 
@@ -194,8 +208,9 @@ CI runs the same via `bun install --frozen-lockfile`. See `AGENTS.md` for conven
 
 ## Agent skills & plugins
 
-Shipped in the npm package for **end users** who install trelly globally — not for repo
-development. See [skills/README.md](skills/README.md).
+Shipped in the npm package for **end users** — skills plus IDE plugin manifests. Full
+plugin docs: [PLUGIN.md](PLUGIN.md) · Privacy: [PRIVACY.md](PRIVACY.md) ·
+[skills/README.md](skills/README.md).
 
 ```bash
 npm install -g trelly
@@ -203,11 +218,19 @@ trelly auth setup && trelly auth login
 
 pi install npm:trelly
 claude plugin install "$(npm root -g)/trelly"
-ln -sf "$(npm root -g)/trelly" ~/.agents/plugins/trelly   # Codex (see skills/README)
-ln -sf "$(npm root -g)/trelly" ~/.cursor/plugins/local/trelly   # Cursor plugin
+./bin/install-cursor-plugin-local.sh   # Cursor local test (copy, not symlink)
 ```
 
 MCP-only (no plugin): add `trelly-mcp` to `~/.cursor/mcp.json` — [mcp.example.json](mcp.example.json).
+
+### Marketplace submission
+
+| Platform | Submit |
+|----------|--------|
+| **Cursor** | [cursor.com/marketplace/publish](https://cursor.com/marketplace/publish) → `https://github.com/brandonkramer/trelly` |
+| **Claude Code** | [clau.de/plugin-directory-submission](https://clau.de/plugin-directory-submission) |
+
+Open source (MIT). After Claude listing: `/plugin install trelly@claude-plugins-official`.
 
 ## License
 

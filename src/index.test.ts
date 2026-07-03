@@ -6,6 +6,7 @@ import { parseKvPairs } from "./cli/context.ts";
 import { customFieldChips } from "./cli/ui/custom-fields.ts";
 import { dueStatus, labelHex, listAccentHex } from "./cli/ui/palette.ts";
 import { isBoard, isCard, isLabel, isList } from "./cli/ui/shapes.ts";
+import { attachmentMime } from "./util/attachment.ts";
 
 describe("parseKvPairs", () => {
   it("parses key=value pairs", () => {
@@ -36,6 +37,14 @@ describe("authLoginUrl", () => {
     );
     assert.equal(url.searchParams.get("callback_method"), "fragment");
     assert.equal(url.searchParams.get("return_url"), "http://127.0.0.1:14189/callback");
+  });
+});
+
+describe("attachmentMime", () => {
+  it("maps common extensions and falls back to octet-stream", () => {
+    assert.equal(attachmentMime("shot.PNG"), "image/png");
+    assert.equal(attachmentMime("doc.pdf"), "application/pdf");
+    assert.equal(attachmentMime("archive.zip"), "application/octet-stream");
   });
 });
 

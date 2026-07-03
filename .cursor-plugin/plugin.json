@@ -1,8 +1,15 @@
 {
   "name": "trelly",
-  "displayName": "Trelly",
-  "description": "Trello CLI + MCP tools — boards, lists, cards, search via trelly-mcp",
   "version": "0.1.1",
-  "mcpServers": "mcp.json",
-  "skills": "./skills/"
+  "description": "Trello boards, lists, cards, search, and comments via MCP — with agent skills for CLI and trelly-mcp tools.",
+  "author": {
+    "name": "brandonkramer"
+  },
+  "homepage": "https://github.com/brandonkramer/trelly#readme",
+  "repository": "https://github.com/brandonkramer/trelly",
+  "license": "MIT",
+  "keywords": ["trello", "trelly", "mcp", "kanban", "productivity"],
+  "logo": "assets/logo.svg",
+  "skills": "./skills/",
+  "mcpServers": "mcp.json"
 }

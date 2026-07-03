@@ -18,6 +18,8 @@
     "longDescription": "Manage Trello with trelly-mcp tools and CLI guidance. Auth once with trelly auth login.",
     "developerName": "brandonkramer",
     "category": "Productivity",
-    "capabilities": ["Read", "Write"]
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/brandonkramer/trelly",
+    "privacyPolicyURL": "https://github.com/brandonkramer/trelly/blob/main/PRIVACY.md"
   }
 }

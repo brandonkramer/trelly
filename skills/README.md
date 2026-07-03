@@ -92,8 +92,9 @@ this package, or use `codex plugin marketplace add owner/repo`.
 **Plugin (skills + MCP):**
 
 ```bash
-mkdir -p ~/.cursor/plugins/local
-ln -sf "$(npm root -g)/trelly" ~/.cursor/plugins/local/trelly
+./bin/install-cursor-plugin-local.sh   # from repo clone (copy — symlinks break in Cursor)
+# or after npm install -g trelly:
+cp -R "$(npm root -g)/trelly" ~/.cursor/plugins/local/trelly
 ```
 
 Restart Cursor / reload MCP.

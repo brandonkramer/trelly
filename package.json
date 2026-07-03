@@ -34,10 +34,13 @@
     "bin/",
     "src/",
     "skills/",
+    "assets/",
     ".claude-plugin/",
     ".codex-plugin/",
     ".cursor-plugin/",
-    ".mcp.json"
+    ".mcp.json",
+    "PLUGIN.md",
+    "PRIVACY.md"
   ],
   "bin": {
     "trelly": "./bin/trelly",
@@ -51,7 +54,7 @@
     "lint": "biome check .",
     "fmt": "biome format --write .",
     "fmt:check": "biome check .",
-    "postinstall": "chmod +x bin/trelly bin/trelly-mcp bin/run-ts 2>/dev/null || true",
+    "postinstall": "chmod +x bin/trelly bin/trelly-mcp bin/run-ts bin/install-cursor-plugin-local.sh 2>/dev/null || true",
     "prepublishOnly": "bun run typecheck && bun test && bun run lint"
   },
   "engines": {

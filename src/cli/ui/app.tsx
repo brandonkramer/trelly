@@ -1,6 +1,10 @@
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { Box, Text, useApp, useInput, useStdout } from "ink";
 import { useCallback, useEffect, useState } from "react";
 import type { TrelloClient } from "../../api/client.ts";
+import { attachmentForm } from "../../util/attachment.ts";
+import { openInBrowser } from "../../util/runtime.ts";
 import {
   type CardChip,
   customFieldChips,
@@ -51,13 +55,19 @@ type BoardData = {
 };
 
 type CardExtras = {
-  attachments: Array<{ id: string; name: string }>;
+  attachments: Array<{ id: string; name: string; url: string }>;
   checklists: Array<{
     id: string;
     name: string;
     items: Array<{ id: string; name: string; complete: boolean }>;
   }>;
-  comments: Array<{ id: string; author: string; date: string; text: string }>;
+  comments: Array<{
+    id: string;
+    author: string;
+    username?: string;
+    date: string;
+    text: string;
+  }>;
   error?: string;
 };
 
@@ -215,6 +225,8 @@ function Column({
   );
 }
 
+type DetailMode = "view" | "comment" | "reply" | "attach";
+
 function CardDetail({
   card,
   listName,
@@ -222,6 +234,9 @@ function CardDetail({
   defs,
   membersById,
   extras,
+  client,
+  onClose,
+  onChanged,
 }: {
   card: UiCard;
   listName: string;
@@ -229,6 +244,9 @@ function CardDetail({
   defs: UiCustomFieldDef[];
   membersById: Map<string, string>;
   extras?: CardExtras;
+  client: TrelloClient;
+  onClose: () => void;
+  onChanged: () => void;
 }) {
   const status = dueStatus(card.due, card.dueComplete);
   const checkItems = card.badges?.checkItems ?? 0;
@@ -238,6 +256,116 @@ function CardDetail({
   const memberNames = (card.idMembers ?? [])
     .map((id) => membersById.get(id))
     .filter((name): name is string => Boolean(name));
+
+  const [focus, setFocus] = useState(0);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [mode, setMode] = useState<DetailMode>("view");
+  const [buffer, setBuffer] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
+
+  const attachments = extras?.attachments ?? [];
+  const comments = extras?.comments ?? [];
+  const itemCount = attachments.length + comments.length;
+  const safeFocus = itemCount === 0 ? -1 : Math.min(focus, itemCount - 1);
+  const focusedAttachment =
+    safeFocus >= 0 && safeFocus < attachments.length
+      ? attachments[safeFocus]
+      : undefined;
+  const focusedComment =
+    safeFocus >= attachments.length
+      ? comments[safeFocus - attachments.length]
+      : undefined;
+
+  const submit = useCallback(async () => {
+    const text = buffer.trim();
+    if (!text) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      if (mode === "attach") {
+        if (/^https?:\/\//i.test(text)) {
+          await client.cardAddAttachment(card.id, { url: text });
+        } else {
+          const path = text.startsWith("~/") ? join(homedir(), text.slice(2)) : text;
+          await client.cardUploadAttachment(card.id, attachmentForm(path));
+        }
+        setNotice({ text: "✓ attachment added" });
+      } else {
+        await client.cardComment(card.id, text);
+        setNotice({ text: "✓ comment added" });
+      }
+      setMode("view");
+      setBuffer("");
+      onChanged();
+    } catch (err) {
+      setNotice({
+        text: err instanceof Error ? err.message : String(err),
+        error: true,
+      });
+    } finally {
+      setBusy(false);
+    }
+  }, [buffer, mode, client, card.id, onChanged]);
+
+  useInput((input, key) => {
+    if (busy) return;
+    if (mode !== "view") {
+      if (key.escape) {
+        setMode("view");
+        setBuffer("");
+      } else if (key.return) {
+        void submit();
+      } else if (key.backspace || key.delete) {
+        setBuffer((prev) => prev.slice(0, -1));
+      } else if (input && !key.ctrl && !key.meta) {
+        setBuffer((prev) => prev + input);
+      }
+      return;
+    }
+    if (key.escape || input === "q") {
+      onClose();
+    } else if (key.upArrow || input === "k") {
+      if (safeFocus > 0) setFocus(safeFocus - 1);
+    } else if (key.downArrow || input === "j") {
+      if (safeFocus >= 0 && safeFocus < itemCount - 1) setFocus(safeFocus + 1);
+    } else if (key.return && focusedAttachment) {
+      openInBrowser(focusedAttachment.url).then(
+        () => setNotice({ text: `✓ opened ${focusedAttachment.name}` }),
+        (err) =>
+          setNotice({
+            text: err instanceof Error ? err.message : String(err),
+            error: true,
+          }),
+      );
+    } else if (key.return && focusedComment) {
+      setExpanded((prev) => {
+        const next = new Set(prev);
+        if (next.has(focusedComment.id)) next.delete(focusedComment.id);
+        else next.add(focusedComment.id);
+        return next;
+      });
+    } else if (input === "c") {
+      setMode("comment");
+      setBuffer("");
+      setNotice(null);
+    } else if (input === "r" && focusedComment) {
+      setMode("reply");
+      setBuffer(focusedComment.username ? `@${focusedComment.username} ` : "");
+      setNotice(null);
+    } else if (input === "a") {
+      setMode("attach");
+      setBuffer("");
+      setNotice(null);
+    }
+  });
+
+  const commentFocus = safeFocus - attachments.length;
+  const maxComments = 5;
+  const commentStart = commentFocus >= maxComments ? commentFocus - maxComments + 1 : 0;
+  const visibleComments = comments.slice(commentStart, commentStart + maxComments);
+  const commentsBelow = comments.length - (commentStart + visibleComments.length);
+
   return (
     <Box flexDirection="column" paddingX={1} width={Math.min(width, 82)}>
       <Text bold wrap="truncate">
@@ -315,34 +443,77 @@ function CardDetail({
               ) : null}
             </Box>
           ))}
-          {extras.attachments.length > 0 ? (
+          {attachments.length > 0 ? (
             <Box flexDirection="column" marginTop={1}>
-              <Text bold>📎 {extras.attachments.length} attachments</Text>
-              {extras.attachments.slice(0, 4).map((attachment) => (
-                <Text key={attachment.id} dimColor wrap="truncate">
-                  {attachment.name}
+              <Text bold>📎 {attachments.length} attachments</Text>
+              {attachments.map((attachment, i) => (
+                <Text key={attachment.id} wrap="truncate">
+                  {safeFocus === i ? <Text color={TRELLO_BLUE}>❯ </Text> : "  "}
+                  <Text bold={safeFocus === i} dimColor={safeFocus !== i}>
+                    {attachment.name}
+                  </Text>
                 </Text>
               ))}
-              {extras.attachments.length > 4 ? (
-                <Text dimColor>… {extras.attachments.length - 4} more</Text>
-              ) : null}
             </Box>
           ) : null}
-          {extras.comments.length > 0 ? (
+          {comments.length > 0 ? (
             <Box flexDirection="column" marginTop={1}>
               <Text bold>💬 comments</Text>
-              {extras.comments.slice(0, 3).map((comment) => (
-                <Box key={comment.id} flexDirection="column">
-                  <Text dimColor wrap="truncate">
-                    {comment.author} · {comment.date.slice(0, 16).replace("T", " ")}
-                  </Text>
-                  <Text wrap="truncate-end">{truncateLines(comment.text, 2)}</Text>
-                </Box>
-              ))}
+              {commentStart > 0 ? <Text dimColor> ↑ {commentStart} more</Text> : null}
+              {visibleComments.map((comment, i) => {
+                const focused = commentFocus === commentStart + i;
+                const isExpanded = expanded.has(comment.id);
+                return (
+                  <Box key={comment.id} flexDirection="column">
+                    <Text wrap="truncate">
+                      {focused ? <Text color={TRELLO_BLUE}>❯ </Text> : "  "}
+                      <Text dimColor bold={focused}>
+                        {comment.author} · {comment.date.slice(0, 16).replace("T", " ")}
+                      </Text>
+                    </Text>
+                    <Box paddingLeft={2}>
+                      <Text wrap={isExpanded ? "wrap" : "truncate-end"}>
+                        {isExpanded ? comment.text : truncateLines(comment.text, 2)}
+                      </Text>
+                    </Box>
+                  </Box>
+                );
+              })}
+              {commentsBelow > 0 ? <Text dimColor> ↓ {commentsBelow} more</Text> : null}
             </Box>
           ) : null}
         </>
       )}
+      {mode !== "view" ? (
+        <Box flexDirection="column" marginTop={1}>
+          <Text bold>
+            {mode === "attach"
+              ? "attach (file path or URL)"
+              : mode === "reply"
+                ? "reply"
+                : "comment"}
+          </Text>
+          <Text>
+            {"> "}
+            {buffer}
+            <Text inverse> </Text>
+          </Text>
+        </Box>
+      ) : null}
+      {busy ? (
+        <Text dimColor>sending…</Text>
+      ) : notice ? (
+        <Text color={notice.error ? "#eb5a46" : undefined} dimColor={!notice.error}>
+          {notice.text}
+        </Text>
+      ) : null}
+      <Box marginTop={1}>
+        <Text dimColor>
+          {mode !== "view"
+            ? "⏎ send · esc cancel"
+            : "↑↓ move · ⏎ open/expand · c comment · r reply · a attach · esc back"}
+        </Text>
+      </Box>
     </Box>
   );
 }
@@ -415,12 +586,12 @@ function BoardView({
   }, [load]);
 
   const loadExtras = useCallback(
-    async (card: UiCard) => {
-      if (extras.has(card.id)) return;
+    async (card: UiCard, force = false) => {
+      if (!force && extras.has(card.id)) return;
       try {
         const [attachments, checklists, actions] = await Promise.all([
           client.cardAttachments(card.id) as Promise<
-            Array<{ id: string; name: string }>
+            Array<{ id: string; name: string; url: string }>
           >,
           client.get(`/cards/${card.id}/checklists`) as Promise<
             Array<{
@@ -429,7 +600,7 @@ function BoardView({
               checkItems?: Array<{ id: string; name: string; state?: string }>;
             }>
           >,
-          client.cardActions(card.id, { filter: "commentCard", limit: 5 }) as Promise<
+          client.cardActions(card.id, { filter: "commentCard", limit: 20 }) as Promise<
             Array<{
               id: string;
               date: string;
@@ -440,7 +611,11 @@ function BoardView({
         ]);
         setExtras((prev) =>
           new Map(prev).set(card.id, {
-            attachments: attachments.map((a) => ({ id: a.id, name: a.name })),
+            attachments: attachments.map((a) => ({
+              id: a.id,
+              name: a.name,
+              url: a.url,
+            })),
             checklists: checklists.map((cl) => ({
               id: cl.id,
               name: cl.name,
@@ -456,6 +631,7 @@ function BoardView({
                 action.memberCreator?.fullName ??
                 action.memberCreator?.username ??
                 "unknown",
+              username: action.memberCreator?.username,
               date: action.date,
               text: action.data?.text ?? "",
             })),
@@ -475,44 +651,43 @@ function BoardView({
     [client, extras],
   );
 
-  useInput((input, key) => {
-    if (detail) {
-      if (key.escape || key.return || input === "q") setDetail(false);
-      return;
-    }
-    if (input === "q") {
-      exit();
-      return;
-    }
-    if (input === "r") {
-      void load();
-      return;
-    }
-    if ((key.escape || key.backspace) && onBack) {
-      onBack();
-      return;
-    }
-    if (!data || data.lists.length === 0) return;
-    const lists = data.lists;
-    const safeCol = Math.min(col, lists.length - 1);
-    const cards = data.cardsByList.get(lists[safeCol].id) ?? [];
-    const safeRow = cards.length === 0 ? -1 : Math.min(row, cards.length - 1);
-    if (key.leftArrow || input === "h") {
-      setCol(Math.max(0, safeCol - 1));
-      setRow(0);
-    } else if (key.rightArrow || input === "l") {
-      setCol(Math.min(lists.length - 1, safeCol + 1));
-      setRow(0);
-    } else if (key.upArrow || input === "k") {
-      if (safeRow > 0) setRow(safeRow - 1);
-    } else if (key.downArrow || input === "j") {
-      if (safeRow >= 0 && safeRow < cards.length - 1) setRow(safeRow + 1);
-    } else if (key.return && safeRow >= 0) {
-      const focusedCard = cards[safeRow];
-      if (focusedCard) void loadExtras(focusedCard);
-      setDetail(true);
-    }
-  });
+  useInput(
+    (input, key) => {
+      if (input === "q") {
+        exit();
+        return;
+      }
+      if (input === "r") {
+        void load();
+        return;
+      }
+      if ((key.escape || key.backspace) && onBack) {
+        onBack();
+        return;
+      }
+      if (!data || data.lists.length === 0) return;
+      const lists = data.lists;
+      const safeCol = Math.min(col, lists.length - 1);
+      const cards = data.cardsByList.get(lists[safeCol].id) ?? [];
+      const safeRow = cards.length === 0 ? -1 : Math.min(row, cards.length - 1);
+      if (key.leftArrow || input === "h") {
+        setCol(Math.max(0, safeCol - 1));
+        setRow(0);
+      } else if (key.rightArrow || input === "l") {
+        setCol(Math.min(lists.length - 1, safeCol + 1));
+        setRow(0);
+      } else if (key.upArrow || input === "k") {
+        if (safeRow > 0) setRow(safeRow - 1);
+      } else if (key.downArrow || input === "j") {
+        if (safeRow >= 0 && safeRow < cards.length - 1) setRow(safeRow + 1);
+      } else if (key.return && safeRow >= 0) {
+        const focusedCard = cards[safeRow];
+        if (focusedCard) void loadExtras(focusedCard);
+        setDetail(true);
+      }
+    },
+    { isActive: !detail },
+  );
 
   const columns = stdout?.columns ?? 80;
   const rows = stdout?.rows ?? 24;
@@ -568,6 +743,9 @@ function BoardView({
           defs={data.customFields}
           membersById={data.membersById}
           extras={extras.get(focusedCard.id)}
+          client={client}
+          onClose={() => setDetail(false)}
+          onChanged={() => void loadExtras(focusedCard, true)}
         />
       ) : (
         <Box>
@@ -588,13 +766,13 @@ function BoardView({
           {colStart + visibleCols < lists.length ? <Text dimColor>›</Text> : null}
         </Box>
       )}
-      <Box marginTop={1}>
-        <Text dimColor>
-          {detail
-            ? "esc/⏎/q back"
-            : `←→ lists · ↑↓ cards · ⏎ detail · r refresh${onBack ? " · esc boards" : ""} · q quit`}
-        </Text>
-      </Box>
+      {detail ? null : (
+        <Box marginTop={1}>
+          <Text dimColor>
+            {`←→ lists · ↑↓ cards · ⏎ detail · r refresh${onBack ? " · esc boards" : ""} · q quit`}
+          </Text>
+        </Box>
+      )}
     </Box>
   );
 }

@@ -1,21 +1,7 @@
-import { readFileSync } from "node:fs";
-import { basename, extname } from "node:path";
 import type { Command } from "commander";
+import { attachmentForm } from "../../util/attachment.ts";
 import { getClient, parseJsonFlag, parseKvPairs } from "../context.ts";
 import { rootOpts, run } from "./run.ts";
-
-const ATTACHMENT_MIME: Record<string, string> = {
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".gif": "image/gif",
-  ".webp": "image/webp",
-  ".svg": "image/svg+xml",
-  ".pdf": "application/pdf",
-  ".txt": "text/plain",
-  ".md": "text/markdown",
-  ".json": "application/json",
-};
 
 export function registerCardCommands(program: Command): void {
   const cards = program.command("cards").description("Card operations");
@@ -201,16 +187,7 @@ export function registerCardCommands(program: Command): void {
           throw new Error("Pass exactly one of --url or --file");
         }
         if (opts.file) {
-          const type =
-            ATTACHMENT_MIME[extname(opts.file).toLowerCase()] ??
-            "application/octet-stream";
-          const form = new FormData();
-          form.append(
-            "file",
-            new Blob([readFileSync(opts.file)], { type }),
-            opts.name ?? basename(opts.file),
-          );
-          return client.cardUploadAttachment(id, form);
+          return client.cardUploadAttachment(id, attachmentForm(opts.file, opts.name));
         }
         return client.cardAddAttachment(id, { url: opts.url, name: opts.name });
       }),

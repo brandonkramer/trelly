@@ -9,7 +9,7 @@
   "homepage": "https://github.com/brandonkramer/trelly#readme",
   "repository": "https://github.com/brandonkramer/trelly",
   "license": "MIT",
-  "keywords": ["trello", "trelly", "mcp", "kanban"],
+  "keywords": ["trello", "trelly", "mcp", "kanban", "productivity"],
   "skills": ["./skills"],
   "mcpServers": "./.mcp.json"
 }

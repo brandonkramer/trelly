@@ -27,8 +27,8 @@ trelly auth list
 **Plugin (skills + MCP):** after `npm install -g trelly`:
 
 ```bash
-mkdir -p ~/.cursor/plugins/local
-ln -sf "$(npm root -g)/trelly" ~/.cursor/plugins/local/trelly
+cp -R "$(npm root -g)/trelly" ~/.cursor/plugins/local/trelly
+# or from clone: ./bin/install-cursor-plugin-local.sh
 ```
 
 **MCP only** — `~/.cursor/mcp.json`:

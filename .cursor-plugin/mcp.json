@@ -1,7 +1,8 @@
 {
   "mcpServers": {
     "trelly": {
-      "command": "trelly-mcp",
+      "command": "bash",
+      "args": ["../bin/trelly-mcp"],
       "env": {
         "TRELLO_PROFILE": "default"
       }
