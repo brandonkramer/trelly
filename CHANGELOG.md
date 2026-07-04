@@ -7,15 +7,36 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-07-04
+
 ### Added
 
-- Per-platform agent install guides (Pi, Claude Code, Cursor, Codex) in
+- **Google Antigravity plugin** (`.antigravity-plugin/`) — skills + MCP via `trelly-mcp`.
+- New **logo** (`assets/logo.svg`); README badge updated.
+- Power-Up **dark theme** from Trello context; hosted **privacy page** for Power-Up review.
+- Per-platform agent install guides (Pi, Claude Code, Cursor, Codex, Antigravity) in
   [skills/README.md](skills/README.md).
+- [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ### Changed
 
-- [README.md](README.md) and [PLUGIN.md](PLUGIN.md) point to the expanded skills install
-  documentation.
+- [README.md](README.md): step-by-step auth setup (API key → token, common pitfalls).
+- [README.md](README.md) and [PLUGIN.md](PLUGIN.md): MCP config paths for Claude, Codex,
+  and Antigravity; point to expanded skills install docs.
+- [skills/trelly-card-display.md](skills/trelly-card-display.md): full **Manual format**
+  spec (badges, labels, due, custom fields) for raw JSON paths (MCP `trello_api`, CLI
+  `--json`).
+- [skills/trelly-mcp/SKILL.md](skills/trelly-mcp/SKILL.md) and
+  [skills/trelly/SKILL.md](skills/trelly/SKILL.md): link to card-display contract instead
+  of duplicating format rules.
+- Skill/docs examples use generic placeholders (`org/repo`, `Example card`).
+
+### Fixed
+
+- API: correct checklist and custom-field **item update** routes.
+- Power-Up card-back section: resilient badges fallback, signed-URL card data (new card
+  backs), `t.cards` board fallback, theme check hoisted out of `try`.
+- Biome: exclude SVGs from lint/format checks.
 
 ## [0.3.1] - 2026-07-03
 
@@ -89,7 +110,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 Early public releases — CLI + MCP foundation, multi-profile auth, kanban TUI, search,
 webhooks, `trelly api` escape hatch. See git history before `v0.2.0` for details.
 
-[Unreleased]: https://github.com/brandonkramer/trelly/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/brandonkramer/trelly/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/brandonkramer/trelly/releases/tag/v0.3.2
 [0.3.1]: https://github.com/brandonkramer/trelly/releases/tag/v0.3.1
 [0.3.0]: https://github.com/brandonkramer/trelly/releases/tag/v0.3.0
 [0.2.1]: https://github.com/brandonkramer/trelly/releases/tag/v0.2.1
