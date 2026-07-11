@@ -235,7 +235,7 @@ agent workflows (link PR after push, move card to review), attach the GitHub URL
 | Use MCP | Use CLI |
 |---------|---------|
 | IDE agent managing Trello in chat | Terminal, shell scripts, jq pipelines |
-| Structured tool calls with schemas | `trello ui` interactive board |
+| Structured tool calls with schemas | `trelly ui` interactive board |
 | Cursor/Codex/Claude with MCP wired | CI with `--json` |
 
 For terminal work, invoke the **trelly** skill instead.

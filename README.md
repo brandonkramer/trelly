@@ -156,7 +156,7 @@ Top-level: `auth` · `boards` · `lists` · `cards` · `checklists` · `labels` 
 | **orgs** | `get` · `boards` |
 | **actions** | `get` |
 | **api** | raw REST (`-X`, `--path`, `--query`, `--body`) |
-| **ui** | `[boardId]` — or run bare `trello` / `trelly` |
+| **ui** | `[boardId]` — or run bare `trelly` |
 
 List-type custom field values: use `trelly api` with `PUT /cards/{id}/customField/{fieldId}/item` and `{"idValue":"..."}` (see [skills/trelly/SKILL.md](skills/trelly/SKILL.md)).
 

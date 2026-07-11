@@ -199,7 +199,9 @@ Reload MCP. Skills are **not** loaded — read [trelly-mcp/SKILL.md](trelly-mcp/
 
 ## Codex
 
-Codex uses `.codex-plugin/plugin.json` + root `.mcp.json` (same bundle as Claude).
+Codex uses `.codex-plugin/plugin.json`, which contains its MCP launch configuration
+inline. The relative command and working directory resolve from the installed plugin root;
+Claude continues to use the root `.mcp.json`.
 
 ### Install (recommended — local marketplace)
 
@@ -224,7 +226,7 @@ Create or merge `~/.agents/plugins/marketplace.json`:
       "name": "trelly",
       "source": {
         "source": "local",
-        "path": "./trelly"
+        "path": "./.agents/plugins/trelly"
       },
       "policy": {
         "installation": "AVAILABLE",
@@ -238,10 +240,10 @@ Create or merge `~/.agents/plugins/marketplace.json`:
 
 Then:
 
-1. **Restart Codex**
-2. Run **`/plugins`**
-3. Install **Trelly**
-4. Confirm MCP **trelly** and skills load (`${PLUGIN_ROOT}` / `${CLAUDE_PLUGIN_ROOT}` → `bin/trelly-mcp`)
+1. Run `codex plugin add trelly@local-trelly` (or install **Trelly** from `/plugins`).
+2. Start a new Codex thread.
+3. Confirm MCP **trelly** and skills load (`./bin/trelly-mcp` from the installed plugin
+   root).
 
 Team distribution: [Codex plugin docs](https://developers.openai.com/codex/plugins/build) — marketplace with `git-subdir` or `codex plugin marketplace add owner/repo`.
 
@@ -255,7 +257,8 @@ Team distribution: [Codex plugin docs](https://developers.openai.com/codex/plugi
 ```bash
 npm install -g trelly@latest
 # symlink target updates automatically if you used ln -sf "$(npm root -g)/trelly"
-# Restart Codex or reinstall plugin from /plugins if skills look stale
+codex plugin add trelly@local-trelly
+# Start a new Codex thread so MCP and skills reload
 ```
 
 ### MCP only
@@ -315,7 +318,7 @@ When you only want Trello **tools** in chat (no bundled skills):
 |-----|------------------------|
 | Cursor | `~/.cursor/mcp.json` |
 | Claude Code | Claude MCP / plugin `.mcp.json` when not using full plugin |
-| Codex | Via plugin `.mcp.json` or Codex MCP settings |
+| Codex | Inline plugin manifest or Codex MCP settings |
 
 ---
 
@@ -328,7 +331,7 @@ When you only want Trello **tools** in chat (no bundled skills):
 | `bin/trelly-mcp` | MCP stdio server |
 | `.antigravity-plugin/` | Google Antigravity plugin manifest & MCP config |
 | `.claude-plugin/` + `.mcp.json` | Claude Code plugin + MCP wiring |
-| `.codex-plugin/` + `.mcp.json` | Codex plugin + MCP wiring |
+| `.codex-plugin/plugin.json` | Codex plugin + inline MCP wiring |
 | `.cursor-plugin/` + `.cursor-plugin/mcp.json` | Cursor plugin + MCP wiring |
 | `package.json` `"pi"` | Pi skills path |
 

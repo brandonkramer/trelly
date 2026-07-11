@@ -11,7 +11,15 @@
   "license": "MIT",
   "keywords": ["trello", "trelly", "mcp", "kanban"],
   "skills": "./skills/",
-  "mcpServers": "./.mcp.json",
+  "mcpServers": {
+    "trelly": {
+      "command": "./bin/trelly-mcp",
+      "cwd": ".",
+      "env": {
+        "TRELLO_PROFILE": "default"
+      }
+    }
+  },
   "interface": {
     "displayName": "Trelly",
     "shortDescription": "Trello boards, cards, and search from Codex",
@@ -20,6 +28,11 @@
     "category": "Productivity",
     "capabilities": ["Read", "Write"],
     "websiteURL": "https://github.com/brandonkramer/trelly",
-    "privacyPolicyURL": "https://github.com/brandonkramer/trelly/blob/main/PRIVACY.md"
+    "privacyPolicyURL": "https://github.com/brandonkramer/trelly/blob/main/PRIVACY.md",
+    "defaultPrompt": [
+      "Show my Trello boards.",
+      "List the cards in a Trello list.",
+      "Find a Trello card and summarize its context."
+    ]
   }
 }

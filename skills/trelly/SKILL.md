@@ -1,9 +1,9 @@
 ---
 name: trelly
 description: >-
-  Operate the trelly Trello CLI (npm trelly; bins trelly/trello): auth setup/login,
+  Operate the trelly Trello CLI (npm trelly; bin trelly): auth setup/login,
   human vs --json output, boards/lists/cards, search, attachments, GitHub PR/commit
-  links on cards, trello ui, trello api. Use when the user asks to run trelly/trello
+  links on cards, trelly ui, trelly api. Use when the user asks to run trelly
   commands, list or show Trello cards/todos, link a GitHub PR or commit to a card, or
   automate Trello with trelly.
 ---
@@ -11,7 +11,7 @@ description: >-
 # trelly
 
 Fast Trello CLI (`npm install -g trelly`). **Human Trello-styled output by default**;
-**`--json` for scripts**. Commands: **`trelly`** or **`trello`** (same binary).
+**`--json` for scripts**. Command: **`trelly`**.
 
 ## Routing: prefer MCP in agent hosts
 
