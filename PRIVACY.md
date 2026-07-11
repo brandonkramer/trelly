@@ -13,6 +13,20 @@ describes data handling for marketplace review and end users.
 - **Agent skills** are static markdown instructions bundled in the package. They contain
   no telemetry or phone-home logic.
 
+## Hosted Trello Power-Up
+
+- The companion Power-Up is a static site hosted at
+  [`https://tr3lly.dev`](https://tr3lly.dev). It has no author-operated application
+  backend or database.
+- It uses Trello's Power-Up client inside Trello iframes. To render the current card
+  snapshot, it handles the card ID and URL, badge counts, and up to three attachment
+  names, URLs, and dates in browser memory. The Power-Up does not persist this data or
+  send it to a trelly server.
+- The Power-Up does not request or receive CLI/MCP API keys, tokens, or profile files and
+  does not connect to a local agent.
+- Cloudflare serves the static files and may process ordinary web-request metadata under
+  the [Cloudflare Privacy Policy](https://www.cloudflare.com/privacypolicy/).
+
 ## What leaves your machine
 
 - API requests go **directly to Trello** (`https://api.trello.com`) using your token in

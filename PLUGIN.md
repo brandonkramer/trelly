@@ -10,10 +10,16 @@ npm package root is the plugin bundle (skills + MCP + launcher scripts).
 - **Skills** teach agents when to use the CLI vs MCP, card **`display`** lists, GitHub
   links, and archive vs delete safety (`skills/trelly`, `skills/trelly-mcp`,
   `skills/trelly-card-display.md`).
-- **MCP** exposes 27 Trello tools via stdio (`trelly-mcp` → `src/mcp/server.ts`).
+- **MCP** exposes 30 focused Trello tools via stdio (`trelly-mcp` →
+  `src/mcp/server.ts`), including selective board/card context, attachment operations,
+  name/URL resolution, and separate read/write REST escape hatches.
 - **CLI** (`trelly`) is optional for humans/scripts; the plugin does not require global
   npm install if the IDE loads the plugin from this repository (MCP uses bundled
   `bin/trelly-mcp`).
+
+Successful MCP GET requests use a bounded in-process cache with short, resource-specific
+TTLs, concurrent request deduplication, and mutation-aware invalidation. Read tools accept
+`fresh: true`; set `TRELLO_CACHE=0` when a guaranteed uncached process is needed.
 
 ## Prerequisites (end users)
 
@@ -76,5 +82,8 @@ Reload Claude Code. Confirm MCP server **trelly** and skills load.
 
 - **`trello_card_archive`** / **`trello_board_archive`** — reversible (Trello `closed=true`)
 - **`trello_card_delete`** — permanent; marked `destructiveHint` in MCP registration
+- **`trello_card_comment_delete`** and **`trello_card_attachment_delete`** — permanent
 - No MCP board-delete tool
 - Auth never appears in URLs; tokens in `Authorization` header only
+- The hosted Trello Power-Up is separate from this agent plugin and does not connect to
+  the CLI or MCP server.

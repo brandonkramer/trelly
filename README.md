@@ -82,6 +82,16 @@ In card detail: **↑↓** move over attachments and comments, **Enter** opens t
 
 See the demo above or run `trelly --help` for all subcommands.
 
+## Trello Power-Up
+
+The standalone companion Power-Up is hosted at [`tr3lly.dev`](https://tr3lly.dev). It
+adds a **Copy card link** action and a **Card snapshot** section with badge counts, recent
+attachments, and copy-card-ID/URL actions.
+
+The Power-Up runs entirely inside Trello's iframe framework. It does not connect to the
+local CLI or MCP server, ask for Trello credentials, or require an external agent or
+browser extension. See [PRIVACY.md](PRIVACY.md) for its data handling and hosting details.
+
 ## Auth
 
 Two steps: **API key** (app identity, once) → **token** (your account, per profile). After login the CLI is **you** on Trello — same boards and permissions as the website.

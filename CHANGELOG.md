@@ -7,12 +7,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-07-11
+
 ### Added
 
 - Selective `trello_board_context` and `trello_card_context` reads with field controls;
   board card context includes the standard pre-rendered `display`.
 - Dedicated MCP attachment tools, name/URL resolution, typed output schemas, complete
   safety annotations, and separate read/write raw REST tools.
+- Bounded MCP caching for successful GET requests with route-specific TTLs, in-flight
+  request deduplication, mutation-aware invalidation, `fresh: true` reads, and a
+  `TRELLO_CACHE=0` troubleshooting switch.
+- A standalone Power-Up card snapshot with badge counts, recent attachments, and actions
+  to copy the current card ID or URL.
 
 ### Changed
 
@@ -20,6 +27,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
   atomic read tools; the legacy combined `trello_api` tool was removed.
 - Comment mutations use consistent create/update/delete naming; comment reads moved into
   `trello_card_context`.
+- Power-Up hosting moved to `tr3lly.dev`; the external AI-agent onboarding was removed so
+  the Power-Up works entirely inside Trello without CLI or MCP dependencies.
+
+### Fixed
+
+- Cloudflare Pages deployment uses an available package manager and serves HSTS, CSP,
+  content-type, referrer, and permissions-policy security headers.
 
 ## [0.3.2] - 2026-07-04
 
@@ -124,7 +138,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 Early public releases — CLI + MCP foundation, multi-profile auth, kanban TUI, search,
 webhooks, `trelly api` escape hatch. See git history before `v0.2.0` for details.
 
-[Unreleased]: https://github.com/brandonkramer/trelly/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/brandonkramer/trelly/compare/v0.3.3...HEAD
+[0.3.3]: https://github.com/brandonkramer/trelly/releases/tag/v0.3.3
 [0.3.2]: https://github.com/brandonkramer/trelly/releases/tag/v0.3.2
 [0.3.1]: https://github.com/brandonkramer/trelly/releases/tag/v0.3.1
 [0.3.0]: https://github.com/brandonkramer/trelly/releases/tag/v0.3.0

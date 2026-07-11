@@ -13,7 +13,9 @@ indents it).
 - `src/auth/` — profiles in `~/.config/trelly/config.json` (migrates from
   `~/.config/trello-cli/`), loopback browser flow
 - `src/cli/` — commander program: `index.ts`, `context.ts`, `commands/`, `ui/` (ink kanban TUI)
-- `src/mcp/` — `server.ts`, `tools/` (tool registrations), `handlers.ts`
+- `src/mcp/` — `server.ts`, `tools/` (tool registrations), `handlers.ts`, in-process
+  GET cache in `cache.ts`
+- `powerup/` — standalone Trello Power-Up iframe assets deployed to `tr3lly.dev`
 - `bin/` — bash launchers: `trelly`, `trelly-mcp`
 
 ## Commands
@@ -42,6 +44,9 @@ Run all three checks before committing.
 - Never read, log, or commit credentials (`~/.config/trelly/config.json`);
   auth goes in the `Authorization` header, never in URLs
 - No live Trello API calls in tests
+- The Power-Up must work inside Trello without the CLI, MCP, browser extensions, or local
+  agents. Never request or pass CLI/MCP credentials from a Power-Up iframe; keep security
+  headers in `powerup/_headers` aligned with every hosted iframe.
 - Publishable to npm as **`trelly`** (`npm install -g trelly`); bins run TypeScript via
   `bin/run-ts` (Bun if present, else `tsx` — kept in `dependencies` for Node installs)
 
@@ -51,8 +56,11 @@ Run all three checks before committing.
 - Branch `type/short-description` off `main`; one logical change per PR; say how
   you verified it
 - Never force-push `main`
-- Release: `npm version patch|minor|major && git push --follow-tags` — the `v*` tag
-  runs `release.yml` (npm publish with provenance → GitHub Release → tap bump)
+- Release: first move all shipped notes from `[Unreleased]` into a dated version section
+  in `CHANGELOG.md` and update its comparison links. Run all three checks, bump
+  `package.json`, commit `chore(release): vX.Y.Z`, create an annotated `vX.Y.Z` tag, and
+  push the commit and tag. The tag runs `release.yml` (npm publish with provenance →
+  GitHub Release → tap bump).
 
 ## Agent skills
 
