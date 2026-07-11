@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import {
+  freshField,
   profileField,
   slimCards,
   toolEnvelopeSchema,
@@ -16,6 +17,7 @@ export function registerCardTools(server: McpServer): void {
       description: "Get a card by id or short link.",
       inputSchema: {
         profile: profileField,
+        fresh: freshField,
         cardId: z.string().min(1),
         fields: z
           .string()
@@ -25,9 +27,11 @@ export function registerCardTools(server: McpServer): void {
       annotations: { readOnlyHint: true },
       outputSchema,
     },
-    async ({ profile, cardId, fields }) =>
-      withClient(profile, async (client) =>
-        slimCards(await client.cardGet(cardId, { fields })),
+    async ({ profile, fresh, cardId, fields }) =>
+      withClient(
+        profile,
+        async (client) => slimCards(await client.cardGet(cardId, { fields })),
+        fresh,
       ),
   );
 
@@ -96,14 +100,15 @@ export function registerCardTools(server: McpServer): void {
       description: "List comments on a card.",
       inputSchema: {
         profile: profileField,
+        fresh: freshField,
         cardId: z.string().min(1),
         limit: z.number().int().positive().optional(),
       },
       annotations: { readOnlyHint: true },
       outputSchema,
     },
-    async ({ profile, cardId, limit }) =>
-      withClient(profile, (client) => client.cardComments(cardId, { limit })),
+    async ({ profile, fresh, cardId, limit }) =>
+      withClient(profile, (client) => client.cardComments(cardId, { limit }), fresh),
   );
 
   server.registerTool(
@@ -119,6 +124,38 @@ export function registerCardTools(server: McpServer): void {
     },
     async ({ profile, cardId, text }) =>
       withClient(profile, (client) => client.cardComment(cardId, text)),
+  );
+
+  server.registerTool(
+    "trello_card_comment_edit",
+    {
+      description: "Edit an existing comment on a card.",
+      inputSchema: {
+        profile: profileField,
+        cardId: z.string().min(1),
+        commentId: z.string().min(1),
+        text: z.string().min(1),
+      },
+      outputSchema,
+    },
+    async ({ profile, cardId, commentId, text }) =>
+      withClient(profile, (client) => client.cardEditComment(cardId, commentId, text)),
+  );
+
+  server.registerTool(
+    "trello_card_comment_delete",
+    {
+      description: "Permanently delete a comment from a card. Irreversible.",
+      inputSchema: {
+        profile: profileField,
+        cardId: z.string().min(1),
+        commentId: z.string().min(1),
+      },
+      annotations: { destructiveHint: true },
+      outputSchema,
+    },
+    async ({ profile, cardId, commentId }) =>
+      withClient(profile, (client) => client.cardDeleteComment(cardId, commentId)),
   );
 
   server.registerTool(

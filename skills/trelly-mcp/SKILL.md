@@ -13,6 +13,15 @@ MCP server for Trello (npm package **trelly**, bin **`trelly-mcp`**). Returns JS
 envelope on every tool: `{ ok, profile, data }` /
 `{ ok: false, error, status?, details? }`. Never uses CLI human/Ink output.
 
+## Routing: MCP is the agent default
+
+Inside Cursor, Codex, Claude, or another MCP-capable agent host, use the available
+`trello_*` tools for normal Trello work. Do not spawn the `trelly` CLI merely
+because it is installed. Use the CLI only when the user explicitly requests
+terminal commands or shell automation, MCP is unavailable, or the task requires
+the interactive `trelly ui`. If an MCP call fails, report the failure before
+falling back to the CLI.
+
 > **Listing cards for a user?** Read [trelly-card-display.md](trelly-card-display.md).
 > **`trello_list_cards` / `trello_board_cards` include `display` — paste it verbatim.**
 
@@ -79,8 +88,28 @@ Starts stdio MCP manually (IDE normally launches `trelly-mcp` itself).
 
 - Pass **`profile`** on any tool for a non-default account (or set `TRELLO_PROFILE` in env).
 - Read **`ok`** before using **`data`**.
+- Read tools accept **`fresh: true`** to bypass and refresh the MCP response cache.
 - Prefer **`trello_card_archive`** / **`trello_board_archive`** to close items.
 - **`trello_card_delete`** is **permanent** — no MCP board-delete tool.
+
+### Response cache
+
+The long-lived MCP process caches up to 200 successful GET responses in memory.
+Keys contain only the profile name, request path, and normalized query/field values;
+credentials are never part of cache keys. Identical concurrent GETs share one
+Trello request.
+
+| Read | TTL |
+|------|-----|
+| Boards, lists, labels | 30s |
+| Cards, board cards, list cards | 5s |
+| Comments, attachments | 3s |
+| Search | 7.5s |
+
+Successful writes invalidate related card, list, board, comment, attachment, and
+search entries. Errors, 429 responses, and mutation results are never cached. Set
+`TRELLO_CACHE=0` in the MCP server environment to disable both caching and in-flight
+deduplication. The terminal CLI is always uncached.
 
 ## Tool catalog
 
@@ -102,6 +131,8 @@ Starts stdio MCP manually (IDE normally launches `trelly-mcp` itself).
 | `trello_card_move` | Move to another list |
 | `trello_card_comments` | List comments |
 | `trello_card_comment` | Add comment |
+| `trello_card_comment_edit` | Edit comment |
+| `trello_card_comment_delete` | **Permanently delete comment** |
 | `trello_card_archive` | Close card (reversible) |
 | `trello_card_delete` | **Permanent** delete |
 | `trello_checklist_create` | Checklist on card |
@@ -116,6 +147,18 @@ Starts stdio MCP manually (IDE normally launches `trelly-mcp` itself).
 
 There is **no dedicated attachment MCP tool** yet — use `trello_api` or the CLI
 `cards add-attachment` (see **trelly** skill).
+
+### Card comments
+
+```
+trello_card_comments       cardId
+trello_card_comment        cardId  text: "Done"
+trello_card_comment_edit   cardId  commentId  text: "Updated"
+trello_card_comment_delete cardId  commentId
+```
+
+`commentId` is the action `id` returned by `trello_card_comments`. Comment deletion
+is **permanent** and the delete tool has `destructiveHint: true`.
 
 ## GitHub PR / commit on a card (MCP)
 

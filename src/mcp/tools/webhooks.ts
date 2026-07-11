@@ -1,6 +1,11 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { profileField, toolEnvelopeSchema, withClient } from "../handlers.ts";
+import {
+  freshField,
+  profileField,
+  toolEnvelopeSchema,
+  withClient,
+} from "../handlers.ts";
 
 export function registerWebhookTools(server: McpServer): void {
   const outputSchema = toolEnvelopeSchema;
@@ -9,11 +14,12 @@ export function registerWebhookTools(server: McpServer): void {
     "trello_webhooks_list",
     {
       description: "List webhooks registered for the current token.",
-      inputSchema: { profile: profileField },
+      inputSchema: { profile: profileField, fresh: freshField },
       annotations: { readOnlyHint: true },
       outputSchema,
     },
-    async ({ profile }) => withClient(profile, (client) => client.webhooksForToken()),
+    async ({ profile, fresh }) =>
+      withClient(profile, (client) => client.webhooksForToken(), fresh),
   );
 
   server.registerTool(

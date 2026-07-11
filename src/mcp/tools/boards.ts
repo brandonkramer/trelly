@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import {
+  freshField,
   profileField,
   toolEnvelopeSchema,
   withCardListResult,
@@ -16,6 +17,7 @@ export function registerBoardTools(server: McpServer): void {
       description: "List boards visible to the authenticated member.",
       inputSchema: {
         profile: profileField,
+        fresh: freshField,
         filter: z
           .enum([
             "all",
@@ -38,8 +40,12 @@ export function registerBoardTools(server: McpServer): void {
       annotations: { readOnlyHint: true },
       outputSchema,
     },
-    async ({ profile, filter, fields }) =>
-      withClient(profile, (client) => client.memberBoards("me", { filter, fields })),
+    async ({ profile, fresh, filter, fields }) =>
+      withClient(
+        profile,
+        (client) => client.memberBoards("me", { filter, fields }),
+        fresh,
+      ),
   );
 
   server.registerTool(
@@ -48,6 +54,7 @@ export function registerBoardTools(server: McpServer): void {
       description: "Get a board by id.",
       inputSchema: {
         profile: profileField,
+        fresh: freshField,
         boardId: z.string().min(1),
         fields: z
           .string()
@@ -57,8 +64,8 @@ export function registerBoardTools(server: McpServer): void {
       annotations: { readOnlyHint: true },
       outputSchema,
     },
-    async ({ profile, boardId, fields }) =>
-      withClient(profile, (client) => client.boardGet(boardId, { fields })),
+    async ({ profile, fresh, boardId, fields }) =>
+      withClient(profile, (client) => client.boardGet(boardId, { fields }), fresh),
   );
 
   server.registerTool(
@@ -103,6 +110,7 @@ export function registerBoardTools(server: McpServer): void {
       description: "List lists on a board.",
       inputSchema: {
         profile: profileField,
+        fresh: freshField,
         boardId: z.string().min(1),
         filter: z.string().optional().default("open"),
         fields: z
@@ -113,8 +121,12 @@ export function registerBoardTools(server: McpServer): void {
       annotations: { readOnlyHint: true },
       outputSchema,
     },
-    async ({ profile, boardId, filter, fields }) =>
-      withClient(profile, (client) => client.boardLists(boardId, { filter, fields })),
+    async ({ profile, fresh, boardId, filter, fields }) =>
+      withClient(
+        profile,
+        (client) => client.boardLists(boardId, { filter, fields }),
+        fresh,
+      ),
   );
 
   server.registerTool(
@@ -124,6 +136,7 @@ export function registerBoardTools(server: McpServer): void {
         "List all cards on a board. Default fields omit badges/labels — pass fields including badges,labels for rich `display`. When showing cards to the user, paste response `display` verbatim.",
       inputSchema: {
         profile: profileField,
+        fresh: freshField,
         boardId: z.string().min(1),
         fields: z
           .string()
@@ -136,11 +149,12 @@ export function registerBoardTools(server: McpServer): void {
       annotations: { readOnlyHint: true },
       outputSchema,
     },
-    async ({ profile, boardId, fields, displayHeading }) =>
+    async ({ profile, fresh, boardId, fields, displayHeading }) =>
       withCardListResult(
         profile,
         (client) => client.boardCards(boardId, { fields }),
         displayHeading,
+        fresh,
       ),
   );
 }

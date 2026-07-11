@@ -181,6 +181,15 @@ export class TrelloClient {
     return this.post(`/cards/${id}/actions/comments`, { text });
   }
 
+  cardEditComment(id: string, commentId: string, text: string) {
+    return this.put(`/cards/${id}/actions/${commentId}/comments`, { text });
+  }
+
+  /** Permanently delete a comment. Irreversible. */
+  cardDeleteComment(id: string, commentId: string) {
+    return this.delete(`/cards/${id}/actions/${commentId}/comments`);
+  }
+
   cardMembers(id: string, query: Query = {}) {
     return this.get(`/cards/${id}/members`, query);
   }

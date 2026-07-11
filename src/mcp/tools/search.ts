@@ -1,6 +1,11 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { profileField, toolEnvelopeSchema, withClient } from "../handlers.ts";
+import {
+  freshField,
+  profileField,
+  toolEnvelopeSchema,
+  withClient,
+} from "../handlers.ts";
 
 export function registerSearchTools(server: McpServer): void {
   const outputSchema = toolEnvelopeSchema;
@@ -11,6 +16,7 @@ export function registerSearchTools(server: McpServer): void {
       description: "Search Trello for cards, boards, members, and actions.",
       inputSchema: {
         profile: profileField,
+        fresh: freshField,
         query: z.string().min(1),
         modelTypes: z.string().optional(),
         cardsLimit: z.number().int().positive().optional(),
@@ -23,6 +29,7 @@ export function registerSearchTools(server: McpServer): void {
     },
     async ({
       profile,
+      fresh,
       query,
       modelTypes,
       cardsLimit,
@@ -30,14 +37,17 @@ export function registerSearchTools(server: McpServer): void {
       cardFields,
       boardFields,
     }) =>
-      withClient(profile, (client) =>
-        client.search(query, {
-          modelTypes,
-          cards_limit: cardsLimit,
-          boards_limit: boardsLimit,
-          card_fields: cardFields,
-          board_fields: boardFields,
-        }),
+      withClient(
+        profile,
+        (client) =>
+          client.search(query, {
+            modelTypes,
+            cards_limit: cardsLimit,
+            boards_limit: boardsLimit,
+            card_fields: cardFields,
+            board_fields: boardFields,
+          }),
+        fresh,
       ),
   );
 }

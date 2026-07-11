@@ -115,6 +115,8 @@ trelly --profile work boards lists BOARD_ID
 trelly cards create --list LIST_ID --name "Ship feature"
 trelly cards comments CARD_ID
 trelly cards comment CARD_ID --text "Shipped"
+trelly cards edit-comment CARD_ID COMMENT_ID --text "Actually shipped"
+trelly cards delete-comment CARD_ID COMMENT_ID # permanent
 trelly cards add-attachment CARD_ID --file screenshot.png   # or --url https://…
 trelly search "customer onboarding"
 trelly api -X PUT --path /cards/CARD_ID --query idList=LIST_ID
@@ -134,7 +136,7 @@ Top-level: `auth` · `boards` · `lists` · `cards` · `checklists` · `labels` 
 | **auth** | `setup` · `login` · `list` · `use` · `logout` · `url` |
 | **boards** | `list` · `get` · `create` · `update` · `archive` · `delete` · `lists` · `cards` · `labels` · `members` · `actions` · `custom-fields` |
 | **lists** | `get` · `create` · `update` · `archive` · `cards` |
-| **cards** | `get` · `list` · `create` · `update` · `move` · `comments` · `comment` · `archive` · `delete` · `members` · `add-member` · `remove-member` · `labels` · `add-label` · `remove-label` · `actions` · `attachments` · `add-attachment` · `delete-attachment` · `custom-fields` |
+| **cards** | `get` · `list` · `create` · `update` · `move` · `comments` · `comment` · `edit-comment` · `delete-comment` · `archive` · `delete` · `members` · `add-member` · `remove-member` · `labels` · `add-label` · `remove-label` · `actions` · `attachments` · `add-attachment` · `delete-attachment` · `custom-fields` |
 | **checklists** | `get` · `create` · `update` · `delete` · `add-item` · `update-item` · `delete-item` |
 | **labels** | `get` · `create` · `update` · `delete` |
 | **custom-fields** | `get` · `create` · `update` · `delete` · `set-item` |
@@ -171,7 +173,25 @@ After `npm install -g trelly`, `trelly-mcp` is on your PATH. From a clone, use t
 
 Stdio server — JSON envelope on every tool (`{ ok, profile, data }`), never CLI human output. Pass **`profile`** on any tool for a non-default account. Prefer **`trello_*_archive`** over **`trello_card_delete`** (permanent; no board-delete MCP tool).
 
-### MCP tools (27)
+### MCP response cache
+
+The MCP process keeps up to 200 successful GET responses in memory, keyed by auth
+profile, path, and normalized query fields. Identical concurrent GETs share one
+Trello request. Writes invalidate related card/list/board/search entries; errors,
+429s, and mutation results are never cached.
+
+| Read | TTL |
+|------|-----|
+| Boards, lists, labels | 30s |
+| Cards, board cards, list cards | 5s |
+| Comments, attachments | 3s |
+| Search | 7.5s |
+
+Pass `fresh: true` to a read tool (or a GET through `trello_api`) to bypass and
+refresh the cache. Set `TRELLO_CACHE=0` in the MCP server environment to disable
+caching and in-flight deduplication. The CLI does not use this cache.
+
+### MCP tools (29)
 
 | Tool | Purpose |
 |------|---------|
@@ -191,6 +211,8 @@ Stdio server — JSON envelope on every tool (`{ ok, profile, data }`), never CL
 | `trello_card_move` | Move to another list |
 | `trello_card_comments` | List comments |
 | `trello_card_comment` | Add comment |
+| `trello_card_comment_edit` | Edit comment |
+| `trello_card_comment_delete` | **Permanently delete comment** |
 | `trello_card_archive` | Close card (reversible) |
 | `trello_card_delete` | **Permanent** delete |
 | `trello_checklist_create` | Checklist on card |

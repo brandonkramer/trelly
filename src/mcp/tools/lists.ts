@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import {
+  freshField,
   profileField,
   toolEnvelopeSchema,
   withCardListResult,
@@ -35,6 +36,7 @@ export function registerListTools(server: McpServer): void {
         "List cards in a list. Response includes `display` (markdown-v1, linked titles + 💬📎✓⏰ badges) — when the user should SEE cards, paste `display` verbatim; do not reformat as a plain title list.",
       inputSchema: {
         profile: profileField,
+        fresh: freshField,
         listId: z.string().min(1),
         fields: z
           .string()
@@ -50,11 +52,12 @@ export function registerListTools(server: McpServer): void {
       annotations: { readOnlyHint: true },
       outputSchema,
     },
-    async ({ profile, listId, fields, displayHeading }) =>
+    async ({ profile, fresh, listId, fields, displayHeading }) =>
       withCardListResult(
         profile,
         (client) => client.listCards(listId, { fields }),
         displayHeading,
+        fresh,
       ),
   );
 }

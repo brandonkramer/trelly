@@ -1,5 +1,10 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { profileField, toolEnvelopeSchema, withClient } from "../handlers.ts";
+import {
+  freshField,
+  profileField,
+  toolEnvelopeSchema,
+  withClient,
+} from "../handlers.ts";
 
 export function registerProfileTools(server: McpServer): void {
   const outputSchema = toolEnvelopeSchema;
@@ -31,10 +36,11 @@ export function registerProfileTools(server: McpServer): void {
     "trello_member_me",
     {
       description: "Get the authenticated Trello member.",
-      inputSchema: { profile: profileField },
+      inputSchema: { profile: profileField, fresh: freshField },
       annotations: { readOnlyHint: true },
       outputSchema,
     },
-    async ({ profile }) => withClient(profile, (client) => client.memberMe()),
+    async ({ profile, fresh }) =>
+      withClient(profile, (client) => client.memberMe(), fresh),
   );
 }
