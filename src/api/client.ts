@@ -159,6 +159,14 @@ export class TrelloClient {
     return this.get(`/cards/${id}`, query);
   }
 
+  cardBoard(id: string, query: Query = {}) {
+    return this.get(`/cards/${id}/board`, query);
+  }
+
+  cardList(id: string, query: Query = {}) {
+    return this.get(`/cards/${id}/list`, query);
+  }
+
   cardCreate(query: Query) {
     return this.post("/cards", query);
   }
@@ -225,8 +233,12 @@ export class TrelloClient {
     });
   }
 
-  cardAttachments(id: string) {
-    return this.get(`/cards/${id}/attachments`);
+  cardAttachments(id: string, query: Query = {}) {
+    return this.get(`/cards/${id}/attachments`, query);
+  }
+
+  cardChecklists(id: string) {
+    return this.get(`/cards/${id}/checklists`);
   }
 
   cardAddAttachment(id: string, query: Query) {

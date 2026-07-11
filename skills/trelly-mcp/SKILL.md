@@ -2,7 +2,7 @@
 name: trelly-mcp
 description: >-
   Configure and use the trelly MCP stdio server (trello_boards_list,
-  trello_card_create, trello_search, trello_api, etc.). Use when wiring Cursor/Claude
+  trello_card_create, trello_search, trello_api_get, etc.). Use when wiring Cursor/Claude
   MCP, listing or showing Trello cards/todos, linking GitHub PRs/commits, or choosing
   MCP vs CLI.
 ---
@@ -23,18 +23,19 @@ the interactive `trelly ui`. If an MCP call fails, report the failure before
 falling back to the CLI.
 
 > **Listing cards for a user?** Read [trelly-card-display.md](trelly-card-display.md).
-> **`trello_list_cards` / `trello_board_cards` include `display` — paste it verbatim.**
+> **`trello_list_cards` and `trello_board_context` with `include: ["cards"]`
+> include `display` — paste it verbatim.**
 
-List/get tools default to lean `fields` (id, name, url, due, …) to keep responses
-token-cheap; pass `fields: "all"` when you need more.
-`trello_list_cards` and `trello_board_cards` include slim `badges`, `labels`, and
-pre-rendered **`display`** (markdown-v1).
+Read tools default to lean fields (id, name, URL, due, …) to keep responses
+token-cheap; pass the corresponding field input as `"all"` when you need more.
+`trello_list_cards` and card-inclusive `trello_board_context` responses include
+slim `badges`, `labels`, and pre-rendered **`display`** (markdown-v1).
 
 ## Card lists for humans
 
-See [trelly-card-display.md](trelly-card-display.md). **`trello_list_cards` /
-`trello_board_cards`:** paste `display` verbatim. Raw **`trello_api`** (no `display`):
-use **Manual format** in that doc.
+See [trelly-card-display.md](trelly-card-display.md). For **`trello_list_cards`**
+and **`trello_board_context` with cards included**, paste `display` verbatim. Raw
+**`trello_api_get`** responses have no `display`; use **Manual format** in that doc.
 
 ## Setup
 
@@ -118,67 +119,79 @@ deduplication. The terminal CLI is always uncached.
 | `trello_profiles_list` | Saved profiles + default |
 | `trello_member_me` | Authenticated member |
 | `trello_boards_list` | Member boards (`filter`, `fields`) |
-| `trello_board_get` | Board by id |
 | `trello_board_create` | Create board |
 | `trello_board_archive` | Close board (reversible) |
-| `trello_board_lists` | Lists on board |
-| `trello_board_cards` | All cards on board (**returns `display` — paste for users**) |
+| `trello_board_context` | Board + optional lists, labels, cards, and card `display` |
 | `trello_list_create` | Create list |
 | `trello_list_cards` | Cards in list (**returns `display` markdown — paste for users**) |
-| `trello_card_get` | Card (`fields` optional) |
 | `trello_card_create` | Create card on list |
-| `trello_card_update` | Update card fields map |
+| `trello_card_update` | Update typed content/scheduling fields |
 | `trello_card_move` | Move to another list |
-| `trello_card_comments` | List comments |
-| `trello_card_comment` | Add comment |
-| `trello_card_comment_edit` | Edit comment |
+| `trello_card_comment_create` | Add comment |
+| `trello_card_comment_update` | Edit comment |
 | `trello_card_comment_delete` | **Permanently delete comment** |
 | `trello_card_archive` | Close card (reversible) |
 | `trello_card_delete` | **Permanent** delete |
+| `trello_card_context` | Card + optional board, list, comments, attachments, and checklists |
+| `trello_card_attachment_add` | Attach a URL to a card |
+| `trello_card_attachment_delete` | **Permanently delete attachment** |
 | `trello_checklist_create` | Checklist on card |
 | `trello_checklist_add_item` | Checklist item |
 | `trello_label_create` | Board label |
 | `trello_card_add_label` | Label on card |
 | `trello_search` | Search Trello |
+| `trello_resolve` | Resolve card/board/list name or URL to IDs |
 | `trello_webhooks_list` | Token webhooks |
 | `trello_webhook_create` | Create webhook |
 | `trello_webhook_delete` | Delete webhook |
-| `trello_api` | Raw REST (`method`, `path`, `query`, `body`) |
+| `trello_api_get` | Read-only REST (`path`, `query`) |
+| `trello_api_mutate` | Write REST (`method`, `path`, `query`, `body`) |
 
-There is **no dedicated attachment MCP tool** yet — use `trello_api` or the CLI
-`cards add-attachment` (see **trelly** skill).
+Use `trello_card_context` and `trello_board_context` for both lean single-resource
+reads and related objects. Their `include` and field inputs avoid fetching unneeded data.
+`trello_resolve` accepts names and Trello URLs and returns ambiguity candidates
+instead of guessing.
+
+Both context tools default to `include: []` for a lean primary-resource read. Add
+only what the task needs. `trello_board_context` supports `boardFields`,
+`listFilter`, `listFields`, `cardFields`, and `displayHeading`;
+`trello_card_context` supports `cardFields`, `commentsLimit`, and
+`attachmentFields`.
 
 ### Card comments
 
 ```
-trello_card_comments       cardId
-trello_card_comment        cardId  text: "Done"
-trello_card_comment_edit   cardId  commentId  text: "Updated"
-trello_card_comment_delete cardId  commentId
+trello_card_context         cardId  include: ["comments"]
+trello_card_comment_create  cardId  text: "Done"
+trello_card_comment_update  cardId  commentId  text: "Updated"
+trello_card_comment_delete  cardId  commentId
 ```
 
-`commentId` is the action `id` returned by `trello_card_comments`. Comment deletion
-is **permanent** and the delete tool has `destructiveHint: true`.
+`commentId` is the action `id` in `trello_card_context` response `data.comments`.
+Comment deletion is **permanent** and has `destructiveHint: true`.
 
 ## GitHub PR / commit on a card (MCP)
 
 Boards with the **GitHub Power-Up** show rich PR UI when attached through Trello.
-Agents link the same way via **`trello_api`** — a URL attachment, not the Power-Up
-OAuth picker.
+Agents link the same way via **`trello_card_attachment_add`** — a URL attachment,
+not the Power-Up OAuth picker.
 
 ### Attach PR or commit
 
 ```
-trello_api
-  method: POST
-  path: /cards/{cardId}/attachments
-  query: { "url": "https://github.com/org/repo/pull/42", "name": "#42 feature title" }
+trello_card_attachment_add
+  cardId: {cardId}
+  url: "https://github.com/org/repo/pull/42"
+  name: "#42 feature title"
 ```
 
 Commit:
 
 ```
-query: { "url": "https://github.com/org/repo/commit/abc1234", "name": "abc1234 message" }
+trello_card_attachment_add
+  cardId: {cardId}
+  url: "https://github.com/org/repo/commit/abc1234"
+  name: "abc1234 message"
 ```
 
 Always set **`name`** to something scannable (`#N title` or short SHA + subject).
@@ -186,36 +199,36 @@ Always set **`name`** to something scannable (`#N title` or short SHA + subject)
 ### List or remove attachments
 
 ```
-trello_api  GET   /cards/{cardId}/attachments
-trello_api  DELETE /cards/{cardId}/attachments/{attachmentId}
+trello_card_context            cardId: {cardId}  include: ["attachments"]
+trello_card_attachment_delete  cardId: {cardId}  attachmentId: {attachmentId}
 ```
 
 ### Comment fallback
 
 ```
-trello_card_comment  cardId  text: "PR: https://github.com/org/repo/pull/42"
+trello_card_comment_create  cardId  text: "PR: https://github.com/org/repo/pull/42"
 ```
 
 Comments appear in card activity; they are **not** Attachments.
 
 ### Power-Up vs MCP/API
 
-| Feature | GitHub Power-Up (UI) | `trello_api` URL attachment |
-|--------|----------------------|-----------------------------|
+| Feature | GitHub Power-Up (UI) | MCP URL attachment |
+|--------|----------------------|--------------------|
 | Link on card | Yes | Yes |
-| PR title / custom name | Auto | Set `name` in query |
+| PR title / custom name | Auto | Set `name` in the tool input |
 | CI badges on card front | Yes | No |
 | GitHub PR back-link comment | Yes (optional) | No |
 
 Use the Power-Up UI when the user needs badges or GitHub-side comments. For
-agent workflows (link PR after push, move card to review), POST the GitHub URL.
+agent workflows (link PR after push, move card to review), attach the GitHub URL.
 
 ### Typical agent sequence
 
 1. `trello_search` or `trello_list_cards` — find the card
-2. `trello_api` POST `/cards/{id}/attachments` with PR URL + name
+2. `trello_card_attachment_add` with PR URL + name
 3. `trello_card_move` — e.g. To do → Pending review
-4. Optional: `trello_card_comment` with the same PR URL
+4. Optional: `trello_card_comment_create` with the same PR URL
 
 ## When to use MCP vs CLI
 

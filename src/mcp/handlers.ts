@@ -1,4 +1,7 @@
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type {
+  CallToolResult,
+  ToolAnnotations,
+} from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { type JsonValue, type TrelloClient, TrelloError } from "../api/client.ts";
 import { resolveProfile } from "../auth/profiles.ts";
@@ -20,6 +23,45 @@ export const toolEnvelopeSchema = z.object({
   status: z.number().optional(),
   details: z.unknown().optional(),
 });
+
+export function toolEnvelopeSchemaFor<T extends z.ZodType>(dataSchema: T) {
+  return toolEnvelopeSchema.extend({ data: dataSchema.optional() });
+}
+
+export const localReadAnnotations: ToolAnnotations = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: false,
+};
+
+export const readAnnotations: ToolAnnotations = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: true,
+};
+
+export const createAnnotations: ToolAnnotations = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  idempotentHint: false,
+  openWorldHint: true,
+};
+
+export const updateAnnotations: ToolAnnotations = {
+  readOnlyHint: false,
+  destructiveHint: true,
+  idempotentHint: true,
+  openWorldHint: true,
+};
+
+export const deleteAnnotations: ToolAnnotations = {
+  readOnlyHint: false,
+  destructiveHint: true,
+  idempotentHint: false,
+  openWorldHint: true,
+};
 
 export type ToolEnvelope = z.infer<typeof toolEnvelopeSchema>;
 
@@ -143,10 +185,25 @@ export async function withClient<T>(
   fn: (client: TrelloClient, profileName: string) => Promise<T>,
   fresh = false,
 ): Promise<CallToolResult> {
+  return withClientEnvelope(
+    profile,
+    async (client, profileName) => ({ data: await fn(client, profileName) }),
+    fresh,
+  );
+}
+
+export async function withClientEnvelope(
+  profile: string | undefined,
+  fn: (
+    client: TrelloClient,
+    profileName: string,
+  ) => Promise<Pick<ToolEnvelope, "data" | "display" | "displayFormat">>,
+  fresh = false,
+): Promise<CallToolResult> {
   try {
     const { profileName, client } = getMcpClient(profile, fresh);
-    const data = await fn(client, profileName);
-    return toolResult({ ok: true, profile: profileName, data });
+    const envelope = await fn(client, profileName);
+    return toolResult({ ok: true, profile: profileName, ...envelope });
   } catch (err) {
     if (err instanceof TrelloError) {
       return toolResult({

@@ -3,16 +3,17 @@ import { z } from "zod";
 import {
   freshField,
   profileField,
-  toolEnvelopeSchema,
+  readAnnotations,
+  toolEnvelopeSchemaFor,
   withClient,
 } from "../handlers.ts";
+import { trelloBoardSchema, trelloCardSchema } from "../schemas.ts";
 
 export function registerSearchTools(server: McpServer): void {
-  const outputSchema = toolEnvelopeSchema;
-
   server.registerTool(
     "trello_search",
     {
+      title: "Search Trello",
       description: "Search Trello for cards, boards, members, and actions.",
       inputSchema: {
         profile: profileField,
@@ -24,8 +25,13 @@ export function registerSearchTools(server: McpServer): void {
         cardFields: z.string().default("id,name,idList,shortUrl"),
         boardFields: z.string().default("id,name,shortUrl"),
       },
-      annotations: { readOnlyHint: true },
-      outputSchema,
+      annotations: readAnnotations,
+      outputSchema: toolEnvelopeSchemaFor(
+        z.looseObject({
+          cards: z.array(trelloCardSchema).optional(),
+          boards: z.array(trelloBoardSchema).optional(),
+        }),
+      ),
     },
     async ({
       profile,

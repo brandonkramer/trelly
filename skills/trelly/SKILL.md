@@ -18,8 +18,7 @@ Fast Trello CLI (`npm install -g trelly`). **Human Trello-styled output by defau
 When running inside Cursor, Codex, Claude, or another MCP-capable agent host, first
 check whether `trello_*` MCP tools are available. If they are, use those tools for
 normal Trello work instead of spawning the `trelly` CLI. This includes search,
-boards, lists, cards, comments, attachments through `trello_api`, and other REST
-operations.
+boards, lists, cards, comments, attachments, and other REST operations.
 
 Use the CLI only when the user explicitly asks for terminal commands or shell
 automation, MCP is unavailable, or the task requires the interactive `trelly ui`.

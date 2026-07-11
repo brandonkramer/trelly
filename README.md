@@ -187,43 +187,49 @@ Trello request. Writes invalidate related card/list/board/search entries; errors
 | Comments, attachments | 3s |
 | Search | 7.5s |
 
-Pass `fresh: true` to a read tool (or a GET through `trello_api`) to bypass and
+Pass `fresh: true` to a read tool (including `trello_api_get`) to bypass and
 refresh the cache. Set `TRELLO_CACHE=0` in the MCP server environment to disable
 caching and in-flight deduplication. The CLI does not use this cache.
 
-### MCP tools (29)
+### MCP tools (30)
 
 | Tool | Purpose |
 |------|---------|
 | `trello_profiles_list` | Saved profiles + default |
 | `trello_member_me` | Authenticated member |
 | `trello_boards_list` | Member boards |
-| `trello_board_get` | Board by id |
 | `trello_board_create` | Create board |
 | `trello_board_archive` | Close board (reversible) |
-| `trello_board_lists` | Lists on board |
-| `trello_board_cards` | All cards on board |
+| `trello_board_context` | Board + optional lists, labels, cards, and card `display` |
 | `trello_list_create` | Create list |
 | `trello_list_cards` | Cards in list |
-| `trello_card_get` | Card by id |
 | `trello_card_create` | Create card |
 | `trello_card_update` | Update card fields |
 | `trello_card_move` | Move to another list |
-| `trello_card_comments` | List comments |
-| `trello_card_comment` | Add comment |
-| `trello_card_comment_edit` | Edit comment |
+| `trello_card_comment_create` | Add comment |
+| `trello_card_comment_update` | Edit comment |
 | `trello_card_comment_delete` | **Permanently delete comment** |
 | `trello_card_archive` | Close card (reversible) |
 | `trello_card_delete` | **Permanent** delete |
+| `trello_card_context` | Card + optional board, list, comments, attachments, and checklists |
+| `trello_card_attachment_add` | Attach a URL to a card |
+| `trello_card_attachment_delete` | **Permanently delete attachment** |
 | `trello_checklist_create` | Checklist on card |
 | `trello_checklist_add_item` | Checklist item |
 | `trello_label_create` | Board label |
 | `trello_card_add_label` | Label on card |
 | `trello_search` | Search Trello |
+| `trello_resolve` | Resolve card/board/list name or URL to IDs |
 | `trello_webhooks_list` | Token webhooks |
 | `trello_webhook_create` | Create webhook |
 | `trello_webhook_delete` | Delete webhook |
-| `trello_api` | Raw REST escape hatch |
+| `trello_api_get` | Read-only REST escape hatch |
+| `trello_api_mutate` | Write-capable REST escape hatch |
+
+`trello_board_context` replaces separate board get/list/card reads; use `include`
+plus the resource field controls to fetch only what the task needs. When cards are
+included, its `display` is ready to show to users. `trello_card_context` similarly
+handles card details, comment reads, and attachment reads in one selective call.
 
 Full tool notes and MCP vs CLI guidance: [skills/trelly-mcp/SKILL.md](skills/trelly-mcp/SKILL.md).
 
