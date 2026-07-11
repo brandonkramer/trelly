@@ -7,6 +7,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-07-11
+
 ### Added
 
 - `trelly update` detects npm, Bun, Homebrew, source, and ephemeral installs; checks the
@@ -153,7 +155,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 Early public releases — CLI + MCP foundation, multi-profile auth, kanban TUI, search,
 webhooks, `trelly api` escape hatch. See git history before `v0.2.0` for details.
 
-[Unreleased]: https://github.com/brandonkramer/trelly/compare/v0.3.3...HEAD
+[Unreleased]: https://github.com/brandonkramer/trelly/compare/v0.3.4...HEAD
+[0.3.4]: https://github.com/brandonkramer/trelly/releases/tag/v0.3.4
 [0.3.3]: https://github.com/brandonkramer/trelly/releases/tag/v0.3.3
 [0.3.2]: https://github.com/brandonkramer/trelly/releases/tag/v0.3.2
 [0.3.1]: https://github.com/brandonkramer/trelly/releases/tag/v0.3.1
