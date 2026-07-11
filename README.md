@@ -135,9 +135,13 @@ The server provides 30 focused tools for profiles, boards, lists, cards, comment
 attachments, checklists, labels, search, webhooks, ID resolution, and raw REST calls.
 Context tools combine common reads so agents need fewer requests.
 
-Successful GET requests use a bounded, short-lived in-process cache with concurrent
-request deduplication. Pass `fresh: true` for a guaranteed network read or set
-`TRELLO_CACHE=0` to disable caching. Errors and mutations are never cached.
+Successful GET requests use bounded, short-lived caches: in-process for MCP and on disk
+for the CLI at `$XDG_CACHE_HOME/trelly/responses` (or `~/.cache/trelly/responses`).
+Cards are cached for 15 seconds, comments and attachments for 10 seconds, search for 20
+seconds, and boards, lists, and labels for 1 minute. MCP also deduplicates concurrent
+requests. Pass `fresh: true` to an MCP read or the global CLI flag `--fresh` for a network
+read. Set `TRELLO_CACHE=0` to disable caching. Errors and mutations are never cached;
+successful mutations invalidate related reads.
 
 See [the MCP skill](skills/trelly-mcp/SKILL.md) for tool details, safety guidance,
 and when to use MCP instead of the CLI.

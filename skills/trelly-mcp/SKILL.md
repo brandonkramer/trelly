@@ -107,15 +107,16 @@ Trello request.
 
 | Read | TTL |
 |------|-----|
-| Boards, lists, labels | 30s |
-| Cards, board cards, list cards | 5s |
-| Comments, attachments | 3s |
-| Search | 7.5s |
+| Boards, lists, labels | 1m |
+| Cards, board cards, list cards | 15s |
+| Comments, attachments | 10s |
+| Search | 20s |
 
 Successful writes invalidate related card, list, board, comment, attachment, and
 search entries. Errors, 429 responses, and mutation results are never cached. Set
 `TRELLO_CACHE=0` in the MCP server environment to disable both caching and in-flight
-deduplication. The terminal CLI is always uncached.
+deduplication. The terminal CLI uses the same TTLs in a bounded disk cache; its global
+`--fresh` flag bypasses and refreshes a read.
 
 ## Tool catalog
 

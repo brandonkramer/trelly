@@ -4,6 +4,7 @@ import { failure, getClient, printResult, success } from "../context.ts";
 
 export function rootOpts(cmd: Command): {
   profile?: string;
+  fresh: boolean;
   pretty: boolean;
   json: boolean;
 } {

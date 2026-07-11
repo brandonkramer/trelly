@@ -55,6 +55,7 @@ Credentials: `~/.config/trelly/config.json` (migrates from `~/.config/trello-cli
 | Human (default) | *(none)* |
 | JSON envelope | `--json` → `{ ok, profile, data }` or `{ ok: false, error, ... }` |
 | Pretty JSON | `--json --pretty` |
+| Fresh network read | `--fresh` |
 
 - **Scripts:** always `--json` if parsing stdout.
 - **Token cost:** raw `--json` returns full Trello objects (a board list ≈ 10k tokens) — trim with `jq` (e.g. `| jq '.data[] | {id,name}'`) or request fewer fields (`--fields`, `--query "fields=id,name"`).
@@ -89,7 +90,9 @@ trelly install                        # install detected agent plugins
 trelly update --check                 # CLI + installed plugin updates
 ```
 
-Global: `-p, --profile <name>` (or `TRELLO_PROFILE`).
+Global: `-p, --profile <name>` (or `TRELLO_PROFILE`), `--fresh` to bypass and refresh
+the CLI response cache. Successful CLI GETs are cached on disk briefly; set
+`TRELLO_CACHE=0` to disable caching.
 
 ## Raw API escape hatch
 

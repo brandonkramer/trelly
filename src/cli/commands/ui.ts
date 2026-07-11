@@ -19,7 +19,8 @@ export async function launchUi(
     return;
   }
   try {
-    const { profileName, client } = getClient(root.profile);
+    // Interactive refreshes should always reflect Trello immediately.
+    const { profileName, client } = getClient(root.profile, true);
     const [{ render }, { createElement }, { App }] = await Promise.all([
       import("ink"),
       import("react"),

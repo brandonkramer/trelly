@@ -10,6 +10,12 @@ describes data handling for marketplace review and end users.
 - **Credentials** (API key + token) are stored only in `~/.config/trelly/config.json`
   (file mode `600`). The plugin does not upload credentials to any server operated by
   the trelly author.
+- **CLI response cache** entries are stored locally in
+  `$XDG_CACHE_HOME/trelly/responses` (or `~/.cache/trelly/responses`) with file mode
+  `600`. They may contain Trello response data but never credentials. The cache is
+  bounded to 200 entries; use `--fresh` to refresh a read or `TRELLO_CACHE=0` to disable
+  both CLI and MCP caching. Expired entries are ignored and pruned as the cache is used;
+  delete the response-cache directory to remove all entries immediately.
 - **Agent skills** are static markdown instructions bundled in the package. They contain
   no telemetry or phone-home logic.
 

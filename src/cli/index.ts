@@ -16,6 +16,7 @@ import { registerSearchCommands } from "./commands/search.ts";
 import { launchUi, registerUiCommand } from "./commands/ui.ts";
 import { registerUpdateCommand } from "./commands/update.ts";
 import { registerWebhookCommands } from "./commands/webhooks.ts";
+import { setCliFresh } from "./context.ts";
 
 const program = new Command();
 
@@ -24,9 +25,14 @@ program
   .description("trelly — Trello CLI; bare `trelly` opens the interactive board UI")
   .version(packageVersion())
   .option("-p, --profile <name>", "Auth profile (or TRELLO_PROFILE env)")
+  .option("--fresh", "Bypass cached reads and refresh from Trello", false)
   .option("--json", "Output the raw JSON envelope", false)
   .option("--pretty", "Indent --json output", false)
   .action((_opts, cmd) => launchUi(undefined, cmd));
+
+program.hook("preAction", () => {
+  setCliFresh(Boolean(program.opts().fresh));
+});
 
 registerAuthCommands(program);
 registerBoardCommands(program);

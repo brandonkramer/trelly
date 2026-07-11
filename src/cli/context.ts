@@ -1,11 +1,17 @@
-import { createClient } from "../api/client.ts";
 import { resolveProfile } from "../auth/profiles.ts";
+import { CachedCliTrelloClient } from "./cache.ts";
 
-export function getClient(profile?: string) {
+let freshReads = false;
+
+export function setCliFresh(fresh: boolean): void {
+  freshReads = fresh;
+}
+
+export function getClient(profile?: string, fresh = freshReads) {
   const { name, profile: creds } = resolveProfile(profile);
   return {
     profileName: name,
-    client: createClient(creds.apiKey, creds.token),
+    client: new CachedCliTrelloClient(creds.apiKey, creds.token, name, fresh),
   };
 }
 

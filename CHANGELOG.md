@@ -7,6 +7,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [Unreleased]
 
+### Added
+
+- CLI reads now use a bounded, short-lived disk cache with a global `--fresh` bypass and
+  mutation-aware invalidation; `TRELLO_CACHE=0` disables both CLI and MCP caching.
+
+### Changed
+
+- MCP and CLI cache TTLs are now 15 seconds for cards, 10 seconds for comments and
+  attachments, 20 seconds for search, and 1 minute for boards, lists, and labels.
+
 ## [0.3.7] - 2026-07-11
 
 ### Fixed

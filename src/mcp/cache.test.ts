@@ -39,12 +39,12 @@ describe("McpRequestCache", () => {
       await cache.execute("work", { method: "GET", path: "/cards/1" }, fetch),
       1,
     );
-    now = 4_999;
+    now = 14_999;
     assert.equal(
       await cache.execute("work", { method: "GET", path: "/cards/1" }, fetch),
       1,
     );
-    now = 5_000;
+    now = 15_000;
     assert.equal(
       await cache.execute("work", { method: "GET", path: "/cards/1" }, fetch),
       2,
@@ -240,12 +240,12 @@ describe("McpRequestCache", () => {
 
 describe("cacheTtlMs", () => {
   it("uses route-specific TTLs", () => {
-    assert.equal(cacheTtlMs("/boards"), 30_000);
-    assert.equal(cacheTtlMs("/boards/1/lists"), 30_000);
-    assert.equal(cacheTtlMs("/lists/1/cards"), 5_000);
-    assert.equal(cacheTtlMs("/cards/1"), 5_000);
-    assert.equal(cacheTtlMs("/cards/1/actions"), 3_000);
-    assert.equal(cacheTtlMs("/cards/1/attachments"), 3_000);
-    assert.equal(cacheTtlMs("/search"), 7_500);
+    assert.equal(cacheTtlMs("/boards"), 60_000);
+    assert.equal(cacheTtlMs("/boards/1/lists"), 60_000);
+    assert.equal(cacheTtlMs("/lists/1/cards"), 15_000);
+    assert.equal(cacheTtlMs("/cards/1"), 15_000);
+    assert.equal(cacheTtlMs("/cards/1/actions"), 10_000);
+    assert.equal(cacheTtlMs("/cards/1/attachments"), 10_000);
+    assert.equal(cacheTtlMs("/search"), 20_000);
   });
 });
